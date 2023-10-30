@@ -1,0 +1,18 @@
+{
+	"project": {
+		"name": "master",
+		"slot": 1,
+		"description": "",
+		"platform": "V5",
+		"creationDate": "Mon, 30 Oct 2023 22:00:28 GMT",
+		"language": "python",
+		"python": {
+			"main": "\\src\\main.py"
+		},
+		"sdkVersion": "V5_1_0_1_15"
+	},
+	"extension": {
+		"version": "0.5.0",
+		"json": 1
+	}
+}
