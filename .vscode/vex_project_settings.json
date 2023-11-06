@@ -1,10 +1,10 @@
 {
 	"project": {
-		"name": "master",
+		"name": "code",
 		"slot": 1,
 		"description": "",
 		"platform": "V5",
-		"creationDate": "Mon, 30 Oct 2023 22:00:28 GMT",
+		"creationDate": "Mon, 06 Nov 2023 23:05:27 GMT",
 		"language": "python",
 		"python": {
 			"main": "\\src\\main.py"
