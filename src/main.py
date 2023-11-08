@@ -4,6 +4,7 @@ import urandom
 
 # Brain should be defined by default
 brain=Brain()
+competition=Competition()
 
 # Robot configuration code
 controller_1 = Controller(PRIMARY)
@@ -19,13 +20,8 @@ motor_2 = MotorGroup(motor_2_motor_a, motor_2_motor_b)
 wait(30, MSEC)
 
 
-
-
-
-
 #endregion VEXcode Generated Robot Configuration
 autopilot = False
-
 
 
 class modes:
@@ -34,7 +30,10 @@ class modes:
     mode1 = 2
     mode2 = 3
 
-
+class ButtonDirectCall(BaseException):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
+        self.add_note('button press func called Without A/P')
 class State:
     def __init__(self) -> None:
         self.mode = modes.mode1
@@ -53,6 +52,43 @@ class State:
             "R1": False,
             "R2": False
         }
+        
+        controller_1.buttonA.pressed(self.call_btn('a'))
+        controller_1.buttonB.pressed(self.call_btn('b'))
+        controller_1.buttonX.pressed(self.call_btn('x'))
+        controller_1.buttonY.pressed(self.call_btn('y'))
+        controller_1.buttonUp.pressed(self.call_btn('u'))
+        controller_1.buttonDown.pressed(self.call_btn('d'))
+        controller_1.buttonLeft.pressed(self.call_btn('l'))
+        controller_1.buttonRight.pressed(self.call_btn('r'))
+        controller_1.buttonL1.pressed(self.call_btn('L1'))
+        controller_1.buttonL2.pressed(self.call_btn('L2'))
+        controller_1.buttonR1.pressed(self.call_btn('R1'))
+        controller_1.buttonR2.pressed(self.call_btn('R2'))
+
+        self.M1 = {}
+        self.M2 = {}
+
+    def call_btn(self,btn):
+        def exec():
+            if self.mode == modes.mode1:
+                f = self.M1.get(btn)
+                if f:
+                    f()
+            elif self.mode == modes.mode2:
+                f = self.M2.get(btn)
+                if f:
+                    f()
+        return exec
+    
+    def Button(self,btn):
+        def button(func):
+            self.M1[btn] = func
+            def wrapper(*args, **kwargs):
+                raise ButtonDirectCall(btn,func)
+                #func(*args, **kwargs)
+            return wrapper
+        return button
 
     def driverNeeded(self,func):
         def wrapper(*args, **kwargs):
@@ -61,6 +97,7 @@ class State:
             
             #func(*args, **kwargs)
         return wrapper
+    
 
     def autopilotOnly(self,func):
         def wrapper(*args, **kwargs):
@@ -87,6 +124,7 @@ def clamp(n, min, max):
         return n 
 
 state = State()
+
 class speedControlls:
     def __init__(self,mx):
         self.diff = 0
@@ -126,9 +164,11 @@ class speedControlls:
 
 speed = speedControlls(driver_pilot_max_speed)
 
+def autonomous_start():
+    state.mode = modes.ap
+    speed.driveSequence()
 
-
-
+competition.autonomous = autonomous_start
 
 
 
