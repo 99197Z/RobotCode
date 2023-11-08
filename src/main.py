@@ -69,11 +69,8 @@ class State:
             #func(*args, **kwargs)
         return wrapper
 
-
-
-
 #max speeds
-speed_mult = 0.5
+
 steer_speed_mult = 0.5
 gas_speed_mult = 1
 autopilot_max_speed = 50 
@@ -94,6 +91,7 @@ class speedControlls:
     def __init__(self,mx):
         self.diff = 0
         self.speed = 0
+        self.speed_mult = 0.5
         self.max_speed = mx
         
     def calcSpeed(self,inv):
@@ -101,11 +99,9 @@ class speedControlls:
             spdDiff = -self.diff
         else:
             spdDiff = self.diff
-        return clamp(self.speed - spdDiff,-self.max_speed,self.max_speed)*speed_mult
+        return clamp(self.speed - spdDiff,-self.max_speed,self.max_speed)*self.speed_mult
 
     def calcMotors(self):
-        
-        
         motor_1.set_velocity(self.calcSpeed(False), PERCENT)
         motor_2.set_velocity(self.calcSpeed(True), PERCENT)
 
