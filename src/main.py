@@ -30,6 +30,7 @@ class modes:
     mode1 = 2
     mode2 = 3
 
+
 class ButtonDirectCall(BaseException):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
@@ -53,42 +54,59 @@ class State:
             "R2": False
         }
         
-        controller_1.buttonA.pressed(self.call_btn('a'))
-        controller_1.buttonB.pressed(self.call_btn('b'))
-        controller_1.buttonX.pressed(self.call_btn('x'))
-        controller_1.buttonY.pressed(self.call_btn('y'))
-        controller_1.buttonUp.pressed(self.call_btn('u'))
-        controller_1.buttonDown.pressed(self.call_btn('d'))
-        controller_1.buttonLeft.pressed(self.call_btn('l'))
-        controller_1.buttonRight.pressed(self.call_btn('r'))
-        controller_1.buttonL1.pressed(self.call_btn('L1'))
-        controller_1.buttonL2.pressed(self.call_btn('L2'))
-        controller_1.buttonR1.pressed(self.call_btn('R1'))
-        controller_1.buttonR2.pressed(self.call_btn('R2'))
+        controller_1.buttonA.pressed(self.call_btn_rel('a'))
+        controller_1.buttonB.pressed(self.call_btn_rel('b'))
+        controller_1.buttonX.pressed(self.call_btn_rel('x'))
+        controller_1.buttonY.pressed(self.call_btn_rel('y'))
+        controller_1.buttonUp.pressed(self.call_btn_rel('u'))
+        controller_1.buttonDown.pressed(self.call_btn_rel('d'))
+        controller_1.buttonLeft.pressed(self.call_btn_rel('l'))
+        controller_1.buttonRight.pressed(self.call_btn_rel('r'))
+        controller_1.buttonL1.pressed(self.call_btn_rel('L1'))
+        controller_1.buttonL2.pressed(self.call_btn_rel('L2'))
+        controller_1.buttonR1.pressed(self.call_btn_rel('R1'))
+        controller_1.buttonR2.pressed(self.call_btn_rel('R2'))
+
+        controller_1.buttonA.pressed(self.call_btn_press('a'))
+        controller_1.buttonB.pressed(self.call_btn_press('b'))
+        controller_1.buttonX.pressed(self.call_btn_press('x'))
+        controller_1.buttonY.pressed(self.call_btn_press('y'))
+        controller_1.buttonUp.pressed(self.call_btn_press('u'))
+        controller_1.buttonDown.pressed(self.call_btn_press('d'))
+        controller_1.buttonLeft.pressed(self.call_btn_press('l'))
+        controller_1.buttonRight.pressed(self.call_btn_press('r'))
+        controller_1.buttonL1.pressed(self.call_btn_press('L1'))
+        controller_1.buttonL2.pressed(self.call_btn_press('L2'))
+        controller_1.buttonR1.pressed(self.call_btn_press('R1'))
+        controller_1.buttonR2.pressed(self.call_btn_press('R2'))
 
         self.M1 = {}
         self.M2 = {}
 
-    def call_btn(self,btn):
+    def call_btn_press(self,btn):
         def exec():
             if self.mode == modes.mode1:
                 f = self.M1.get(btn)
                 if f:
-                    f()
+                    f.press()
             elif self.mode == modes.mode2:
                 f = self.M2.get(btn)
                 if f:
-                    f()
+                    f.press()
         return exec
     
-    def Button(self,btn):
-        def button(func):
-            self.M1[btn] = func
-            def wrapper(*args, **kwargs):
-                raise ButtonDirectCall(btn,func)
-                #func(*args, **kwargs)
-            return wrapper
-        return button
+    def call_btn_rel(self,btn):
+        def exec():
+            if self.mode == modes.mode1:
+                f = self.M1.get(btn)
+                if f:
+                    f.release()
+            elif self.mode == modes.mode2:
+                f = self.M2.get(btn)
+                if f:
+                    f.release()
+        return exec
+    
 
     def driverNeeded(self,func):
         def wrapper(*args, **kwargs):
@@ -125,6 +143,24 @@ def clamp(n, min, max):
 
 state = State()
 
+class ButtonBinding:
+    def __init__(self,btn,mode) -> None:
+        self.btn = btn
+        self.mode = mode
+    def press(self):
+        pass
+    def release(self):
+        pass
+    def PressRebind(self,func):
+        self.press = func
+        def wrapper(*arg,**kwargs):
+            raise ButtonDirectCall(func,self)
+        return wrapper
+    def ReleaseRebind(self,func):
+        self.release = func
+        def wrapper(*arg,**kwargs):
+            raise ButtonDirectCall(func,self)
+        return wrapper
 class speedControlls:
     def __init__(self,mx):
         self.diff = 0
@@ -161,6 +197,7 @@ class speedControlls:
     @state.autopilotOnly
     def driveSequence(self):
         pass
+        
 
 speed = speedControlls(driver_pilot_max_speed)
 
@@ -171,7 +208,14 @@ def autonomous_start():
 competition.autonomous = autonomous_start
 
 
-
+speedMode = ButtonBinding('L2',modes.mode1)
+@speedMode.PressRebind
+def press():
+    speed.speed_mult = gas_speed_mult
+    
+@speedMode.ReleaseRebind
+def release():
+    speed.speed_mult = steer_speed_mult
 
 # Register event with a callback function.
 controller_1.axis3.changed(speed.mspeed)
