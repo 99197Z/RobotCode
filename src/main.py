@@ -54,18 +54,18 @@ class State:
             "R2": False
         }
         
-        controller_1.buttonA.pressed(self.call_btn_rel('a'))
-        controller_1.buttonB.pressed(self.call_btn_rel('b'))
-        controller_1.buttonX.pressed(self.call_btn_rel('x'))
-        controller_1.buttonY.pressed(self.call_btn_rel('y'))
-        controller_1.buttonUp.pressed(self.call_btn_rel('u'))
-        controller_1.buttonDown.pressed(self.call_btn_rel('d'))
-        controller_1.buttonLeft.pressed(self.call_btn_rel('l'))
-        controller_1.buttonRight.pressed(self.call_btn_rel('r'))
-        controller_1.buttonL1.pressed(self.call_btn_rel('L1'))
-        controller_1.buttonL2.pressed(self.call_btn_rel('L2'))
-        controller_1.buttonR1.pressed(self.call_btn_rel('R1'))
-        controller_1.buttonR2.pressed(self.call_btn_rel('R2'))
+        controller_1.buttonA.released(self.call_btn_rel('a'))
+        controller_1.buttonB.released(self.call_btn_rel('b'))
+        controller_1.buttonX.released(self.call_btn_rel('x'))
+        controller_1.buttonY.released(self.call_btn_rel('y'))
+        controller_1.buttonUp.released(self.call_btn_rel('u'))
+        controller_1.buttonDown.released(self.call_btn_rel('d'))
+        controller_1.buttonLeft.released(self.call_btn_rel('l'))
+        controller_1.buttonRight.released(self.call_btn_rel('r'))
+        controller_1.buttonL1.released(self.call_btn_rel('L1'))
+        controller_1.buttonL2.released(self.call_btn_rel('L2'))
+        controller_1.buttonR1.released(self.call_btn_rel('R1'))
+        controller_1.buttonR2.released(self.call_btn_rel('R2'))
 
         controller_1.buttonA.pressed(self.call_btn_press('a'))
         controller_1.buttonB.pressed(self.call_btn_press('b'))
@@ -212,7 +212,7 @@ speedMode = ButtonBinding('L2',modes.mode1)
 @speedMode.PressRebind
 def press():
     speed.speed_mult = gas_speed_mult
-    
+
 @speedMode.ReleaseRebind
 def release():
     speed.speed_mult = steer_speed_mult
