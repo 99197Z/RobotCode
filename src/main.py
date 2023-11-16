@@ -30,6 +30,43 @@ class modes:
     mode1 = 2
     mode2 = 3
 
+class Status_Warnings:
+    draw_pos = {
+        "T":1
+    }
+    def __init__(self) -> None:
+        self.Temps = 0
+        self.restrict = False
+        self.states = {
+            "T":False
+        }
+    def draw(self,text,bool):
+        controller_1.screen.set_cursor(self.draw_pos[text],1)
+        if bool:
+            controller_1.screen.print(text)
+        else:
+            controller_1.screen.print("-")
+
+    def temps(self,val):
+        self.Temps = val
+        if val > 50:
+            self.states['T'] = True
+            self.restrict = True
+            controller_1.rumble("...---...")
+            self.draw('T',True)
+        elif self.states['T']:
+            self.states['T'] = False
+            controller_1.rumble(".")
+            self.draw('T',False)
+
+    def restrict_all(self,func):
+        def wrapper(*args,**kwargs):
+            if not self.restrict:
+                return func(*args,**kwargs)
+            else:
+                return None
+status = Status_Warnings()
+
 
 class ButtonDirectCall(BaseException):
     def __init__(self, *args: object) -> None:
@@ -167,7 +204,15 @@ class speedControlls:
         self.speed = 0
         self.speed_mult = 0.5
         self.max_speed = mx
-        
+    
+    def drive(self,speed,diff):
+        self.speed = speed
+        self.diff = diff
+        self.calcMotors()
+    
+    def stop(self):
+        self.drive(0,0)
+
     def calcSpeed(self,inv):
         if inv:
             spdDiff = -self.diff
@@ -178,6 +223,7 @@ class speedControlls:
     def calcMotors(self):
         motor_1.set_velocity(self.calcSpeed(False), PERCENT)
         motor_2.set_velocity(self.calcSpeed(True), PERCENT)
+        status.temps(max(motor_1_motor_a.temperature(),motor_1_motor_b.temperature(),motor_2_motor_a.temperature(),motor_2_motor_b.temperature()))
 
     @state.driverNeeded
     def mspeed(self):
@@ -196,7 +242,14 @@ class speedControlls:
     
     @state.autopilotOnly
     def driveSequence(self):
-        pass
+        self.drive(25,0)
+        wait(1500)
+        self.drive(50,-1)
+        wait(500)
+        self.drive(10,0)
+        wait(100)
+        self.stop()
+
         
 
 speed = speedControlls(driver_pilot_max_speed)
@@ -209,6 +262,7 @@ competition.autonomous = autonomous_start
 
 
 speedMode = ButtonBinding('L2',modes.mode1)
+@status.restrict_all
 @speedMode.PressRebind
 def press():
     speed.speed_mult = gas_speed_mult
