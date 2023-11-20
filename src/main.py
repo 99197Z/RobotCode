@@ -79,10 +79,12 @@ class Status_Warnings:
             self.states['T'] = True
             self.restrict = True
             anunciator.warn('T')
+            controller_1.screen.set_cursor(2,1)
+            controller_1.screen.print(val)
+
         elif self.states['T']:
             self.states['T'] = False
-            controller_1.rumble(".")
-            self.draw('T',False)
+            anunciator.warn('T')
 
     def restrict_all(self,func):
         def wrapper(*args,**kwargs):
