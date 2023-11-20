@@ -4,7 +4,7 @@ import urandom
 
 # Brain should be defined by default
 brain=Brain()
-competition=Competition()
+#competition=Competition(None,None)
 
 # Robot configuration code
 controller_1 = Controller(PRIMARY)
@@ -30,10 +30,36 @@ class modes:
     mode1 = 2
     mode2 = 3
 
-class Status_Warnings:
-    draw_pos = {
-        "T":1
+class Anunciator:
+    status = {
+        "R":0,
+        "T":1,
+        "G":2
     }
+    statz = ["R","T","G"]
+    def __init__(self) -> None:
+        self.stat = [False for i in self.statz]
+        for i in self.statz:
+            self.draw(i)
+    def draw(self,c):
+        controller_1.screen.set_cursor(1,self.status[c]+1)
+        if self.stat[self.status[c]]:
+            controller_1.screen.print(c)
+        else:
+            controller_1.screen.print("-")
+    def tgl(self,c):
+        self.stat[self.status[c]] = not self.stat[self.status[c]]
+        self.draw(c)
+    def warn(self,c):
+        self.tgl(c)
+        if self.stat[self.status[c]]:
+            controller_1.rumble("...---...")
+        else:
+            controller_1.rumble(".")
+        
+anunciator = Anunciator()
+
+class Status_Warnings:
     def __init__(self) -> None:
         self.Temps = 0
         self.restrict = False
@@ -52,8 +78,7 @@ class Status_Warnings:
         if val > 50:
             self.states['T'] = True
             self.restrict = True
-            controller_1.rumble("...---...")
-            self.draw('T',True)
+            anunciator.warn('T')
         elif self.states['T']:
             self.states['T'] = False
             controller_1.rumble(".")
@@ -72,53 +97,25 @@ class ButtonDirectCall(BaseException):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
         self.add_note('button press func called Without A/P')
+
+btnz = {
+    "a":controller_1.buttonA,
+    "b":controller_1.buttonB,
+    "x":controller_1.buttonX,
+    "y":controller_1.buttonY,
+    "up":controller_1.buttonUp,
+    "down":controller_1.buttonDown,
+    "left":controller_1.buttonLeft,
+    "right":controller_1.buttonRight,
+    "L1":controller_1.buttonL1,
+    "L2":controller_1.buttonL2,
+    "R1":controller_1.buttonR1,
+    "R2":controller_1.buttonR2
+}
 class State:
     def __init__(self) -> None:
         self.mode = modes.mode1
         self.errors = 0
-        self.buttons = {
-            "a": False,
-            "b": False,
-            "x": False,
-            "y": False,
-            "u": False,
-            "d": False,
-            "l": False,
-            "r": False,
-            "L1": False,
-            "L2": False,
-            "R1": False,
-            "R2": False
-        }
-        
-        controller_1.buttonA.released(self.call_btn_rel('a'))
-        controller_1.buttonB.released(self.call_btn_rel('b'))
-        controller_1.buttonX.released(self.call_btn_rel('x'))
-        controller_1.buttonY.released(self.call_btn_rel('y'))
-        controller_1.buttonUp.released(self.call_btn_rel('u'))
-        controller_1.buttonDown.released(self.call_btn_rel('d'))
-        controller_1.buttonLeft.released(self.call_btn_rel('l'))
-        controller_1.buttonRight.released(self.call_btn_rel('r'))
-        controller_1.buttonL1.released(self.call_btn_rel('L1'))
-        controller_1.buttonL2.released(self.call_btn_rel('L2'))
-        controller_1.buttonR1.released(self.call_btn_rel('R1'))
-        controller_1.buttonR2.released(self.call_btn_rel('R2'))
-
-        controller_1.buttonA.pressed(self.call_btn_press('a'))
-        controller_1.buttonB.pressed(self.call_btn_press('b'))
-        controller_1.buttonX.pressed(self.call_btn_press('x'))
-        controller_1.buttonY.pressed(self.call_btn_press('y'))
-        controller_1.buttonUp.pressed(self.call_btn_press('u'))
-        controller_1.buttonDown.pressed(self.call_btn_press('d'))
-        controller_1.buttonLeft.pressed(self.call_btn_press('l'))
-        controller_1.buttonRight.pressed(self.call_btn_press('r'))
-        controller_1.buttonL1.pressed(self.call_btn_press('L1'))
-        controller_1.buttonL2.pressed(self.call_btn_press('L2'))
-        controller_1.buttonR1.pressed(self.call_btn_press('R1'))
-        controller_1.buttonR2.pressed(self.call_btn_press('R2'))
-
-        self.M1 = {}
-        self.M2 = {}
 
     def call_btn_press(self,btn):
         def exec():
@@ -184,20 +181,27 @@ class ButtonBinding:
     def __init__(self,btn,mode) -> None:
         self.btn = btn
         self.mode = mode
-    def press(self):
-        pass
-    def release(self):
-        pass
-    def PressRebind(self,func):
-        self.press = func
+    def press(self,f:function):
+        def mode():
+            if state.mode == self.mode:
+                f()
+        return mode
+    def release(self,f):
+        def mode():
+            if state.mode == self.mode:
+                f()
+        return mode
+    def Press(self,func):
+        btnz[self.btn].pressed(self.press(func))
         def wrapper(*arg,**kwargs):
             raise ButtonDirectCall(func,self)
         return wrapper
-    def ReleaseRebind(self,func):
-        self.release = func
+    def Release(self,func):
+        btnz[self.btn].released(self.release(func))
         def wrapper(*arg,**kwargs):
             raise ButtonDirectCall(func,self)
         return wrapper
+    
 class speedControlls:
     def __init__(self,mx):
         self.diff = 0
@@ -258,18 +262,30 @@ def autonomous_start():
     state.mode = modes.ap
     speed.driveSequence()
 
-competition.autonomous = autonomous_start
+#competition.autonomous = autonomous_start
 
 
 speedMode = ButtonBinding('L2',modes.mode1)
 @status.restrict_all
-@speedMode.PressRebind
+@speedMode.Press
 def press():
     speed.speed_mult = gas_speed_mult
+    anunciator.tgl('G')
 
-@speedMode.ReleaseRebind
+@speedMode.Release
 def release():
     speed.speed_mult = steer_speed_mult
+    anunciator.tgl('G')
+
+test = ButtonBinding('L1',modes.mode1)
+@status.restrict_all
+@test.Press
+def press():
+    anunciator.warn('T')
+
+@test.Release
+def release():
+    anunciator.warn('T')
 
 # Register event with a callback function.
 controller_1.axis3.changed(speed.mspeed)
