@@ -24,6 +24,8 @@ wait(30, MSEC)
 autopilot = False
 
 
+# Cheese
+
 class modes:
     stop = 0
     ap = 1
