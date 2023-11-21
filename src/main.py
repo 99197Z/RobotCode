@@ -55,7 +55,7 @@ class Anunciator:
     def warn(self,c):
         self.tgl(c)
         if self.stat[self.status[c]]:
-            controller_1.rumble("...---...")
+            controller_1.rumble("...---...") # sos
         else:
             controller_1.rumble(".")
         
