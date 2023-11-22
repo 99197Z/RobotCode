@@ -35,9 +35,10 @@ class Anunciator:
     status = {
         "R":0,
         "T":1,
-        "G":2
+        "G":2,
+        "r":3
     }
-    statz = ["R","T","G"]
+    statz = ["R","T","G",'r']
     def __init__(self) -> None:
         self.stat = [False for i in self.statz]
         for i in self.statz:
@@ -269,15 +270,33 @@ speedMode = ButtonBinding('L2',modes.mode1)
 @status.restrict_all
 @speedMode.Press
 def press():
-    speed.speed_mult = gas_speed_mult
+    if speed.speed_mult>= 0:
+        speed.speed_mult = gas_speed_mult
+    else:
+        speed.speed_mult = -gas_speed_mult
     anunciator.tgl('G')
 
 @speedMode.Release
 def release():
-    speed.speed_mult = steer_speed_mult
+    if speed.speed_mult>= 0:
+        speed.speed_mult = steer_speed_mult
+    else:
+        speed.speed_mult = -steer_speed_mult
     anunciator.tgl('G')
 
-test = ButtonBinding('L1',modes.mode1)
+reverseMode = ButtonBinding('L1',modes.mode1)
+@status.restrict_all
+@reverseMode.Press
+def press():
+    speed.speed_mult = -steer_speed_mult
+    anunciator.tgl('r')
+
+@reverseMode.Release
+def release():
+    speed.speed_mult = steer_speed_mult
+    anunciator.tgl('r')
+
+test = ButtonBinding('R1',modes.mode1)
 @status.restrict_all
 @test.Press
 def press():
