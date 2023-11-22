@@ -94,6 +94,7 @@ class Status_Warnings:
                 return func(*args,**kwargs)
             else:
                 return None
+        return wrapper
 status = Status_Warnings()
 
 
