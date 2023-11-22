@@ -209,7 +209,7 @@ class speedControlls:
     def __init__(self,mx):
         self.diff = 0
         self.speed = 0
-        self.speed_mult = 0.5
+        self.speed_mult = 0
         self.max_speed = mx
     
     def drive(self,speed,diff):
@@ -238,6 +238,8 @@ class speedControlls:
         brain.screen.set_cursor(1,1)
         brain.screen.clear_screen()
         brain.screen.print(str(pos))
+        brain.screen.set_cursor(2,2)
+        brain.screen.print(str(self.speed_mult))
         self.speed = pos
         self.calcMotors()
 
