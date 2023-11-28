@@ -11,7 +11,7 @@ controller_1 = Controller(PRIMARY)
 motor_1_motor_a = Motor(Ports.PORT1, GearSetting.RATIO_18_1, False)
 motor_1_motor_b = Motor(Ports.PORT11, GearSetting.RATIO_18_1, False)
 motor_1 = MotorGroup(motor_1_motor_a, motor_1_motor_b)
-motor_2_motor_a = Motor(Ports.PORT7, GearSetting.RATIO_18_1, True)
+motor_2_motor_a = Motor(Ports.PORT6, GearSetting.RATIO_18_1, True)
 motor_2_motor_b = Motor(Ports.PORT20, GearSetting.RATIO_18_1, True)
 motor_2 = MotorGroup(motor_2_motor_a, motor_2_motor_b)
 
@@ -262,6 +262,7 @@ speed = speedControlls(driver_pilot_max_speed)
 def autonomous_start():
     state.mode = modes.ap
     speed.driveSequence()
+    state.mode = modes.mode1
 
 #competition.autonomous = autonomous_start
 
@@ -300,6 +301,7 @@ test = ButtonBinding('R1',modes.mode1)
 @status.restrict_all
 @test.Press
 def press():
+    autonomous_start()
     anunciator.warn('T')
 
 @test.Release
