@@ -16,6 +16,12 @@ motor_2_motor_b = Motor(Ports.PORT20, GearSetting.RATIO_18_1, True)
 motor_2 = MotorGroup(motor_2_motor_a, motor_2_motor_b)
 
 
+motor_pokearm = Motor(Ports.PORT5, GearSetting.RATIO_18_1, False)
+
+motor_pokearm.reset_position()
+
+limit_pokearm = Limit(brain.three_wire_port.a)
+
 # wait for rotation sensor to fully initialize
 wait(30, MSEC)
 
@@ -36,9 +42,10 @@ class Anunciator:
         "R":0,
         "T":1,
         "G":2,
-        "r":3
+        "r":3,
+        'A':4
     }
-    statz = ["R","T","G",'r']
+    statz = ["R","T","G",'r','A']
     def __init__(self) -> None:
         self.stat = [False for i in self.statz]
         for i in self.statz:
@@ -51,6 +58,9 @@ class Anunciator:
             controller_1.screen.print("-")
     def tgl(self,c):
         self.stat[self.status[c]] = not self.stat[self.status[c]]
+        self.draw(c)
+    def disable(self,c):
+        self.stat[self.status[c]] = False
         self.draw(c)
     def warn(self,c):
         self.tgl(c)
@@ -307,6 +317,48 @@ def press():
 @test.Release
 def release():
     anunciator.warn('T')
+
+INITD = False
+ARM = True
+
+init = ButtonBinding('a',modes.mode1)
+@init.Press
+def press():
+    if INITD:
+        if ARM:
+            motor_pokearm.spin_to_position(0,DEGREES,25,RPM,False)
+            while not limit_pokearm.pressing():
+                wait(100)
+            motor_pokearm.stop(BRAKE)
+        else:
+            motor_pokearm.spin_to_position(180,DEGREES,25,RPM)
+            
+            motor_pokearm.stop(BRAKE)
+        ARM = not ARM
+        anunciator.tgl('A')
+    else:
+        INITD = True
+        anunciator.tgl('R')
+
+        if not limit_pokearm.pressing():
+            anunciator.tgl('A')
+            motor_pokearm.spin_to_position(-180,DEGREES,10,RPM,False)
+            while not limit_pokearm.pressing():
+                wait(100)
+                controller_1.rumble(".")
+            motor_pokearm.stop(BRAKE)
+            motor_pokearm.reset_position()
+            anunciator.tgl('A')
+        
+        #lower arm
+        motor_pokearm.spin_to_position(180,DEGREES,25,RPM)
+        motor_pokearm.stop(BRAKE)
+        anunciator.tgl('A')
+
+        controller_1.rumble(".")
+
+        anunciator.warn('R')
+    
 
 # Register event with a callback function.
 controller_1.axis3.changed(speed.mspeed)
