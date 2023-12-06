@@ -273,7 +273,13 @@ class speedControlls:
     
     @state.autopilotOnly
     def driveSequence(self):
-        pass
+        self.drive(25,0)
+        wait(1500)
+        self.drive(50,-1)
+        wait(500)
+        self.drive(10,0)
+        wait(100)
+        self.stop()
 
         
 
