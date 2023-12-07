@@ -1,3 +1,4 @@
+#Code By Ben HS
 #region VEXcode Generated Robot Configuration
 from vex import *
 import urandom
@@ -345,11 +346,11 @@ def press():
     if INITD:
         if ARM:
             motor_pokearm.spin_to_position(0,DEGREES,25,RPM,False)
-            while not limit_pokearm.pressing():
-                wait(100)
-            motor_pokearm.stop(BRAKE)
+            #while not limit_pokearm.pressing():
+            #    wait(100)
+            #motor_pokearm.stop(BRAKE)
         else:
-            motor_pokearm.spin_to_position(180,DEGREES,25,RPM)
+            motor_pokearm.spin_to_position(-180,DEGREES,25,RPM)
             
             motor_pokearm.stop(BRAKE)
         ARM = not ARM
@@ -369,7 +370,7 @@ if not limit_pokearm.pressing():
     anunciator.tgl('A')
 motor_pokearm.reset_position()
 #lower arm
-motor_pokearm.spin_to_position(180,DEGREES,25,RPM)
+motor_pokearm.spin_to_position(-180,DEGREES,25,RPM)
 motor_pokearm.stop(BRAKE)
 anunciator.tgl('A')
 
