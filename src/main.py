@@ -17,11 +17,11 @@ motor_2_motor_b = Motor(Ports.PORT20, GearSetting.RATIO_18_1, True)
 motor_2 = MotorGroup(motor_2_motor_a, motor_2_motor_b)
 
 
-motor_pokearm = Motor(Ports.PORT6, GearSetting.RATIO_36_1, False)
+motor_traparm = Motor(Ports.PORT6, GearSetting.RATIO_36_1, False)
 
-motor_pokearm.reset_position()
+motor_traparm.reset_position()
 
-limit_pokearm = Limit(brain.three_wire_port.h)
+limit_traparm = Limit(brain.three_wire_port.h)
 
 # wait for rotation sensor to fully initialize
 wait(30, MSEC)
@@ -176,7 +176,7 @@ class State:
 
 #max speeds
 
-steer_speed_mult = 0.5
+steer_speed_mult = 1 #0.5
 gas_speed_mult = 1
 autopilot_max_speed = 50 
 driver_pilot_max_speed = 100 
@@ -209,11 +209,13 @@ class ButtonBinding:
         return mode
     def Press(self,func):
         btnz[self.btn].pressed(self.press(func))
+        #self.press = func
         def wrapper(*arg,**kwargs):
             raise ButtonDirectCall(func,self)
         return wrapper
     def Release(self,func):
         btnz[self.btn].released(self.release(func))
+        #self.release = func
         def wrapper(*arg,**kwargs):
             raise ButtonDirectCall(func,self)
         return wrapper
@@ -222,16 +224,16 @@ class speedControlls:
     def __init__(self,mx):
         self.diff = 0
         self.speed = 0
-        self.speed_mult = 0
+        self.speed_mult = 1
         self.max_speed = mx
-    
-    def drive(self,speed,diff):
+    @state.autopilotOnly
+    def Adrive(self,speed,diff):
         self.speed = speed
         self.diff = diff
         self.calcMotors()
     
     def stop(self):
-        self.drive(0,0)
+        self.Adrive(0,0)
 
     def calcSpeed(self,inv):
         if inv:
@@ -274,22 +276,29 @@ class speedControlls:
     
     @state.autopilotOnly
     def driveSequence(self):
-        self.drive(25,0)
-        wait(1500)
-        self.drive(50,-1)
-        wait(500)
-        self.drive(10,0)
-        wait(100)
-        self.stop()
+        #self.Adrive(90,0)
+        #wait(1200)
+        #self.Adrive(15,-100)
+        #wait(50)
+        #Arm()
+        #self.Adrive(10,0)
+        #wait(100)
+        #self.stop()
+        pass
+        
 
         
 
 speed = speedControlls(driver_pilot_max_speed)
 
 def autonomous_start():
+    init()
     state.mode = modes.ap
     speed.driveSequence()
-    controller_1.rumble('.......')
+    state.mode = modes.mode1
+
+def driver():
+    init()
     state.mode = modes.mode1
 
 #competition.autonomous = autonomous_start
@@ -313,73 +322,56 @@ def release():
         speed.speed_mult = -steer_speed_mult
     anunciator.tgl('G')
 
-reverseMode = ButtonBinding('L1',modes.mode1)
-@status.restrict_all
-@reverseMode.Press
-def press():
-    speed.speed_mult = -steer_speed_mult
-    anunciator.tgl('r')
-
-@reverseMode.Release
-def release():
-    speed.speed_mult = steer_speed_mult
-    anunciator.tgl('r')
-
-test = ButtonBinding('R1',modes.mode1)
-@status.restrict_all
-@test.Press
-def press():
-    autonomous_start()
-    anunciator.warn('T')
-
-@test.Release
-def release():
-    anunciator.warn('T')
 
 INITD = False
 ARM = True
 
-init = ButtonBinding('a',modes.mode1)
-@init.Press
-def press():
+ArmBtn = ButtonBinding('R2',modes.mode1)
+
+def Arm():
     global ARM
     if INITD:
         if ARM:
-            motor_pokearm.spin_to_position(0,DEGREES,25,RPM,False)
+            motor_traparm.spin_to_position(0,DEGREES,25,RPM,True)
             #while not limit_pokearm.pressing():
             #    wait(100)
-            #motor_pokearm.stop(BRAKE)
+            motor_traparm.stop(COAST)
         else:
-            motor_pokearm.spin_to_position(-180,DEGREES,25,RPM)
+            motor_traparm.spin_to_position(-180,DEGREES,25,RPM,True)
             
-            motor_pokearm.stop(BRAKE)
+            motor_traparm.stop(HOLD)
         ARM = not ARM
         anunciator.tgl('A')
-        
-INITD = True
-anunciator.tgl('R')
+@ArmBtn.Press
+def press():
+    Arm()
 
-if not limit_pokearm.pressing():
-    anunciator.tgl('A')
-    motor_pokearm.spin_to_position(180,DEGREES,10,RPM,False)
-    while not limit_pokearm.pressing():
-        wait(100)
+def init():
+    global ARM, INITD
+    if not INITD and competition.is_enabled():
+        INITD = True
+        anunciator.tgl('R')
+
+        if not limit_traparm.pressing():
+            anunciator.tgl('A')
+            motor_traparm.spin_to_position(180,DEGREES,10,RPM,False)
+            while not limit_traparm.pressing():
+                wait(100)
+                controller_1.rumble(".")
+            motor_traparm.stop(COAST)
+            
+            anunciator.tgl('A')
+        motor_traparm.reset_position()
+        #lower arm
+        motor_traparm.spin_to_position(-180,DEGREES,25,RPM)
+        anunciator.tgl('A')
+
         controller_1.rumble(".")
-    motor_pokearm.stop(BRAKE)
-    
-    anunciator.tgl('A')
-motor_pokearm.reset_position()
-#lower arm
-motor_pokearm.spin_to_position(-180,DEGREES,25,RPM)
-motor_pokearm.stop(BRAKE)
-anunciator.tgl('A')
 
-controller_1.rumble(".")
+        anunciator.warn('R')    
 
-anunciator.warn('R')    
-
-competition=Competition(None,autonomous_start)
-
+competition=Competition(driver,autonomous_start)
+init()
 # Register event with a callback function.
 #controller_1.axis3.changed(speed.mspeed)
 #controller_1.axis4.changed(speed.dspeed)
