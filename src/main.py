@@ -1,4 +1,4 @@
-#Code By Ben HS
+#Code By Ben H
 #region VEXcode Generated Robot Configuration
 from vex import *
 import urandom
@@ -276,10 +276,11 @@ class speedControlls:
     
     @state.autopilotOnly
     def driveSequence(self):
-        #self.Adrive(90,0)
-        #wait(1200)
-        #self.Adrive(15,-100)
-        #wait(50)
+        self.Adrive(90,10)
+        wait(1200)
+        self.Adrive(15,-100)
+        wait(100)
+        self.Adrive(0,-100)
         #Arm()
         #self.Adrive(10,0)
         #wait(100)
