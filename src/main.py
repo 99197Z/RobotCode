@@ -5,6 +5,7 @@ import urandom
 
 # Brain should be defined by default
 brain=Brain()
+brain_inertial = Inertial(Ports.PORT1)
 
 
 # Robot configuration code
@@ -29,7 +30,7 @@ wait(30, MSEC)
 
 #endregion VEXcode Generated Robot Configuration
 autopilot = False
-
+data = "time,X,Y,Z,temps,ArmTemp,arm\n"
 
 
 class modes:
@@ -44,9 +45,10 @@ class Anunciator:
         "T":1,
         "G":2,
         "r":3,
-        'A':4
+        'A':4,
+        'S':5
     }
-    statz = ["R","T","G",'r','A']
+    statz = ["R","T","G",'r','A',"S"]
     def __init__(self) -> None:
         self.stat = [False for i in self.statz]
         for i in self.statz:
@@ -88,7 +90,7 @@ class Status_Warnings:
 
     def temps(self,val):
         self.Temps = val
-        if val > 50:
+        if val > 40:
             self.states['T'] = True
             self.restrict = True
             anunciator.warn('T')
@@ -113,6 +115,7 @@ class ButtonDirectCall(BaseException):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
         self.add_note('button press func called Without A/P')
+        
 
 btnz = {
     "a":controller_1.buttonA,
@@ -266,6 +269,7 @@ class speedControlls:
     
     @state.driverNeeded
     def drive(self):
+        log_point()
         pos = controller_1.axis3.position()
         L = clamp(pos,-self.max_speed,self.max_speed)*self.speed_mult
         pos = controller_1.axis2.position()
@@ -276,11 +280,11 @@ class speedControlls:
     
     @state.autopilotOnly
     def driveSequence(self):
-        self.Adrive(90,10)
+        self.Adrive(90,20)
         wait(1200)
         self.Adrive(15,-100)
         wait(100)
-        self.Adrive(0,-100)
+        self.Adrive(0,0)
         #Arm()
         #self.Adrive(10,0)
         #wait(100)
@@ -293,8 +297,8 @@ class speedControlls:
 speed = speedControlls(driver_pilot_max_speed)
 
 def autonomous_start():
-    init()
     state.mode = modes.ap
+    init()
     speed.driveSequence()
     state.mode = modes.mode1
 
@@ -327,6 +331,17 @@ def release():
 INITD = False
 ARM = True
 
+def log_point():
+    global data
+    temps = max(motor_1_motor_a.temperature(),motor_1_motor_b.temperature(),motor_2_motor_a.temperature(),motor_2_motor_b.temperature())
+    data += str(brain.timer.value())+","
+    data += str(brain_inertial.acceleration(XAXIS))+","
+    data += str(brain_inertial.acceleration(YAXIS))+","
+    data += str(brain_inertial.acceleration(ZAXIS))+","
+    data += str(temps)+","
+    data += str(motor_traparm.temperature())+","
+    data += str(int(ARM))+"\n"
+
 ArmBtn = ButtonBinding('R2',modes.mode1)
 
 def Arm():
@@ -343,19 +358,21 @@ def Arm():
             motor_traparm.stop(HOLD)
         ARM = not ARM
         anunciator.tgl('A')
+        log_point()
 @ArmBtn.Press
 def press():
     Arm()
 
 def init():
     global ARM, INITD
+    log_point()
     if not INITD and competition.is_enabled():
         INITD = True
         anunciator.tgl('R')
 
         if not limit_traparm.pressing():
             anunciator.tgl('A')
-            motor_traparm.spin_to_position(180,DEGREES,10,RPM,False)
+            motor_traparm.spin_to_position(180,DEGREES,15,RPM,False)
             while not limit_traparm.pressing():
                 wait(100)
                 controller_1.rumble(".")
@@ -369,7 +386,21 @@ def init():
 
         controller_1.rumble(".")
 
-        anunciator.warn('R')    
+        anunciator.warn('R')
+        if brain.sdcard.is_inserted():
+            pass
+        else:
+            anunciator.tgl("S")    
+
+
+save = ButtonBinding('b',modes.mode1)
+@save.Press
+def press():
+    if brain.sdcard.savefile("matchData.csv",bytearray(data,'utf-8')) == 0:
+        brain.screen.print('Save Faled')
+    else:
+        brain.screen.print('Saved')
+    print(data)
 
 competition=Competition(driver,autonomous_start)
 init()
