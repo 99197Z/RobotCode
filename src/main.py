@@ -271,9 +271,9 @@ class speedControlls:
     def drive(self):
         log_point()
         pos = controller_1.axis3.position()
-        L = clamp(pos,-self.max_speed,self.max_speed)*self.speed_mult
-        pos = controller_1.axis2.position()
         R = clamp(pos,-self.max_speed,self.max_speed)*self.speed_mult
+        pos = controller_1.axis2.position()
+        L = clamp(pos,-self.max_speed,self.max_speed)*self.speed_mult
         motor_1.set_velocity(L, PERCENT)
         motor_2.set_velocity(R, PERCENT)
         status.temps(max(motor_1_motor_a.temperature(),motor_1_motor_b.temperature(),motor_2_motor_a.temperature(),motor_2_motor_b.temperature()))
