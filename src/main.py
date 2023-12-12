@@ -23,6 +23,7 @@ motor_traparm = Motor(Ports.PORT6, GearSetting.RATIO_36_1, False)
 motor_traparm.reset_position()
 
 limit_traparm = Limit(brain.three_wire_port.h)
+brain_inertial.calibrate()
 
 # wait for rotation sensor to fully initialize
 wait(30, MSEC)
@@ -30,7 +31,7 @@ wait(30, MSEC)
 
 #endregion VEXcode Generated Robot Configuration
 autopilot = False
-data = "time,X,Y,Z,temps,ArmTemp,arm\n"
+data = "time,X,Y,Z,Forward Left Drive,Forward Right Drive,Aft Left Drive,Aft Right Drive,ArmTemp,arm\n"
 
 
 class modes:
@@ -333,12 +334,16 @@ ARM = True
 
 def log_point():
     global data
-    temps = max(motor_1_motor_a.temperature(),motor_1_motor_b.temperature(),motor_2_motor_a.temperature(),motor_2_motor_b.temperature())
     data += str(brain.timer.value())+","
+
     data += str(brain_inertial.acceleration(XAXIS))+","
     data += str(brain_inertial.acceleration(YAXIS))+","
     data += str(brain_inertial.acceleration(ZAXIS))+","
-    data += str(temps)+","
+    data += str(motor_1_motor_a.temperature())+","
+    data += str(motor_1_motor_b.temperature())+","
+    data += str(motor_2_motor_a.temperature())+","
+    data += str(motor_2_motor_b.temperature())+","
+    
     data += str(motor_traparm.temperature())+","
     data += str(int(ARM))+"\n"
 
@@ -404,6 +409,7 @@ def press():
 
 competition=Competition(driver,autonomous_start)
 init()
+#brain_inertial.collision()
 # Register event with a callback function.
 #controller_1.axis3.changed(speed.mspeed)
 #controller_1.axis4.changed(speed.dspeed)
