@@ -1,5 +1,6 @@
 #Code By Ben H
 #region VEXcode Generated Robot Configuration
+from typing import Any
 from vex import *
 import urandom
 
@@ -32,7 +33,62 @@ wait(30, MSEC)
 #endregion VEXcode Generated Robot Configuration
 autopilot = False
 data = "time,X,Y,Z,Forward Left Drive,Forward Right Drive,Aft Left Drive,Aft Right Drive,ArmTemp,arm\n"
+class DataPoint:
+    def __init__(self,f,*a) -> None:
+        self.f = f
+        self.a = a
+    def __call__(self) -> Any:
+        return self.f(*self.a)
+class Logger:
+    def __init__(self,items) -> None:
+        self.items = items
+        self.data = ""
+        self.line(items.keys())
+        
+    def line(self,items):
+        line = ''
+        for i in items:
+            line += str(i) + ","
+        self.data += line.removesuffix(',') + "\n"
+    def __call__(self):
+        data = []
+        for k,v in self.items.items():
+            data.append(v())
+        self.line(data)
+    def save(self):
+        if brain.sdcard.savefile("matchData.csv",bytearray(self.data,'utf-8')) == 0:
+            brain.screen.print('Save Faled')
+        else:
+            brain.screen.print('Saved')
+        print(self.data)
 
+log = Logger({
+    "time":DataPoint(brain.timer.value),
+    "X":DataPoint(brain_inertial.acceleration,XAXIS),
+    "Y":DataPoint(brain_inertial.acceleration,YAXIS),
+    "Z":DataPoint(brain_inertial.acceleration,ZAXIS),
+
+    "Drive Forward Left Temp": DataPoint(motor_1_motor_a.temperature),
+    "Drive Forward Left Current": DataPoint(motor_1_motor_a.current),
+    "Drive Forward Left Torque": DataPoint(motor_1_motor_a.torque),
+    "Drive Forward Left Velocity": DataPoint(motor_1_motor_a.velocity),
+
+    "Drive Aft Left Temp": DataPoint(motor_1_motor_b.temperature),
+    "Drive Aft Left Current": DataPoint(motor_1_motor_b.current),
+    "Drive Aft Left Torque": DataPoint(motor_1_motor_b.torque),
+    "Drive Aft Left Velocity": DataPoint(motor_1_motor_b.velocity),
+
+    "Drive Forward Right Temp": DataPoint(motor_2_motor_a.temperature),
+    "Drive Forward Right Current": DataPoint(motor_2_motor_a.current),
+    "Drive Forward Right Torque": DataPoint(motor_2_motor_a.torque),
+    "Drive Forward Right Velocity": DataPoint(motor_2_motor_a.velocity),
+
+    "Drive Aft Right Temp": DataPoint(motor_2_motor_b.temperature),
+    "Drive Aft Right Current": DataPoint(motor_2_motor_b.current),
+    "Drive Aft Right Torque": DataPoint(motor_2_motor_b.torque),
+    "Drive Aft Right Velocity": DataPoint(motor_2_motor_b.velocity),
+
+})
 
 class modes:
     stop = 0
@@ -270,7 +326,7 @@ class speedControlls:
     
     @state.driverNeeded
     def drive(self):
-        log_point()
+        log()
         pos = controller_1.axis3.position()
         R = clamp(pos,-self.max_speed,self.max_speed)*self.speed_mult
         pos = controller_1.axis2.position()
@@ -283,8 +339,10 @@ class speedControlls:
     def driveSequence(self):
         self.Adrive(90,20)
         wait(1200)
+        log()
         self.Adrive(15,-100)
         wait(100)
+        log()
         self.Adrive(0,0)
         #Arm()
         #self.Adrive(10,0)
@@ -332,20 +390,6 @@ def release():
 INITD = False
 ARM = True
 
-def log_point():
-    global data
-    data += str(brain.timer.value())+","
-
-    data += str(brain_inertial.acceleration(XAXIS))+","
-    data += str(brain_inertial.acceleration(YAXIS))+","
-    data += str(brain_inertial.acceleration(ZAXIS))+","
-    data += str(motor_1_motor_a.temperature())+","
-    data += str(motor_1_motor_b.temperature())+","
-    data += str(motor_2_motor_a.temperature())+","
-    data += str(motor_2_motor_b.temperature())+","
-    
-    data += str(motor_traparm.temperature())+","
-    data += str(int(ARM))+"\n"
 
 ArmBtn = ButtonBinding('R2',modes.mode1)
 
@@ -363,14 +407,14 @@ def Arm():
             motor_traparm.stop(HOLD)
         ARM = not ARM
         anunciator.tgl('A')
-        log_point()
+        log()
 @ArmBtn.Press
 def press():
     Arm()
 
 def init():
     global ARM, INITD
-    log_point()
+    log()
     if not INITD and competition.is_enabled():
         INITD = True
         anunciator.tgl('R')
@@ -401,11 +445,7 @@ def init():
 save = ButtonBinding('b',modes.mode1)
 @save.Press
 def press():
-    if brain.sdcard.savefile("matchData.csv",bytearray(data,'utf-8')) == 0:
-        brain.screen.print('Save Faled')
-    else:
-        brain.screen.print('Saved')
-    print(data)
+    log.save()
 
 competition=Competition(driver,autonomous_start)
 init()
