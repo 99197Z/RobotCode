@@ -1,6 +1,5 @@
 #Code By Ben H
 #region VEXcode Generated Robot Configuration
-from typing import Any
 from vex import *
 import urandom
 
@@ -32,63 +31,98 @@ wait(30, MSEC)
 
 #endregion VEXcode Generated Robot Configuration
 autopilot = False
-data = "time,X,Y,Z,Forward Left Drive,Forward Right Drive,Aft Left Drive,Aft Right Drive,ArmTemp,arm\n"
 class DataPoint:
     def __init__(self,f,*a) -> None:
         self.f = f
         self.a = a
-    def __call__(self) -> Any:
+    def __call__(self):
         return self.f(*self.a)
 class Logger:
-    def __init__(self,items) -> None:
+    def __init__(self,items,keys) -> None:
         self.items = items
-        self.data = ""
-        self.line(items.keys())
+        self.keys = keys
+        self.id = 0
+        self.reset()
+    def reset(self):
+        self.lastPoi = -1
+        self.data = "time,"
+        self.line(self.keys)
         
-    def line(self,items):
+    def line(self,items,time=0):
         line = ''
         for i in items:
             line += str(i) + ","
-        self.data += line.removesuffix(',') + "\n"
+        self.data += line[0:-1] + "\n"
+        if len(self.data) > 5000:
+            self.save()
+
     def __call__(self):
-        data = []
-        for k,v in self.items.items():
-            data.append(v())
-        self.line(data)
+        timestamp = brain.timer.value()
+        if self.lastPoi+0.05 <= timestamp:
+            self.lastPoi=timestamp
+            data = [timestamp]
+            for k in self.keys:
+                v = self.items[k]
+                data.append(v())
+            self.line(data,timestamp)
     def save(self):
-        if brain.sdcard.savefile("matchData.csv",bytearray(self.data,'utf-8')) == 0:
+        if brain.sdcard.savefile("matchData%s.csv" % (self.id),bytearray(self.data,'utf-8')) == 0:
             brain.screen.print('Save Faled')
         else:
             brain.screen.print('Saved')
-        print(self.data)
+        self.reset()
+        self.id +=1
 
 log = Logger({
-    "time":DataPoint(brain.timer.value),
     "X":DataPoint(brain_inertial.acceleration,XAXIS),
     "Y":DataPoint(brain_inertial.acceleration,YAXIS),
     "Z":DataPoint(brain_inertial.acceleration,ZAXIS),
 
-    "Drive Forward Left Temp": DataPoint(motor_1_motor_a.temperature),
-    "Drive Forward Left Current": DataPoint(motor_1_motor_a.current),
-    "Drive Forward Left Torque": DataPoint(motor_1_motor_a.torque),
-    "Drive Forward Left Velocity": DataPoint(motor_1_motor_a.velocity),
+    "DFL Temp": DataPoint(motor_1_motor_a.temperature),
+    "DFL Current": DataPoint(motor_1_motor_a.current),
+    "DFL Torque": DataPoint(motor_1_motor_a.torque),
+    "DFL Velocity": DataPoint(motor_1_motor_a.velocity),
 
-    "Drive Aft Left Temp": DataPoint(motor_1_motor_b.temperature),
-    "Drive Aft Left Current": DataPoint(motor_1_motor_b.current),
-    "Drive Aft Left Torque": DataPoint(motor_1_motor_b.torque),
-    "Drive Aft Left Velocity": DataPoint(motor_1_motor_b.velocity),
+    "DAL Temp": DataPoint(motor_1_motor_b.temperature),
+    "DAL Current": DataPoint(motor_1_motor_b.current),
+    "DAL Torque": DataPoint(motor_1_motor_b.torque),
+    "DAL Velocity": DataPoint(motor_1_motor_b.velocity),
 
-    "Drive Forward Right Temp": DataPoint(motor_2_motor_a.temperature),
-    "Drive Forward Right Current": DataPoint(motor_2_motor_a.current),
-    "Drive Forward Right Torque": DataPoint(motor_2_motor_a.torque),
-    "Drive Forward Right Velocity": DataPoint(motor_2_motor_a.velocity),
+    "DFR Temp": DataPoint(motor_2_motor_a.temperature),
+    "DFR Current": DataPoint(motor_2_motor_a.current),
+    "DFR Torque": DataPoint(motor_2_motor_a.torque),
+    "DFR Velocity": DataPoint(motor_2_motor_a.velocity),
 
-    "Drive Aft Right Temp": DataPoint(motor_2_motor_b.temperature),
-    "Drive Aft Right Current": DataPoint(motor_2_motor_b.current),
-    "Drive Aft Right Torque": DataPoint(motor_2_motor_b.torque),
-    "Drive Aft Right Velocity": DataPoint(motor_2_motor_b.velocity),
+    "DAR Temp": DataPoint(motor_2_motor_b.temperature),
+    "DAR Current": DataPoint(motor_2_motor_b.current),
+    "DAR Torque": DataPoint(motor_2_motor_b.torque),
+    "DAR Velocity": DataPoint(motor_2_motor_b.velocity),
 
-})
+},[
+    "X",
+    "Y",
+    "Z",
+
+    "DFL Temp",
+    "DFL Current",
+    "DFL Torque",
+    "DFL Velocity",
+
+    "DAL Temp",
+    "DAL Current",
+    "DAL Torque",
+    "DAL Velocity",
+
+    "DFR Temp",
+    "DFR Current",
+    "DFR Torque",
+    "DFR Velocity",
+
+    "DAR Temp",
+    "DAR Current",
+    "DAR Torque",
+    "DAR Velocity"
+])
 
 class modes:
     stop = 0
@@ -419,7 +453,7 @@ def init():
         INITD = True
         anunciator.tgl('R')
 
-        if not limit_traparm.pressing():
+        """if not limit_traparm.pressing():
             anunciator.tgl('A')
             motor_traparm.spin_to_position(180,DEGREES,15,RPM,False)
             while not limit_traparm.pressing():
@@ -433,7 +467,7 @@ def init():
         motor_traparm.spin_to_position(-180,DEGREES,25,RPM)
         anunciator.tgl('A')
 
-        controller_1.rumble(".")
+        controller_1.rumble(".")"""
 
         anunciator.warn('R')
         if brain.sdcard.is_inserted():
