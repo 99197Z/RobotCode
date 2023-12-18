@@ -1,5 +1,5 @@
 #Code By Ben H
-#region VEXcode Generated Robot Configuration
+#region Robot Configuration
 from vex import *
 import urandom
 
@@ -8,47 +8,59 @@ brain=Brain()
 brain_inertial = Inertial(Ports.PORT1)
 
 
-# Robot configuration code
+# Robot connections
 controller_1 = Controller(PRIMARY)
 motor_1_motor_a = Motor(Ports.PORT12, GearSetting.RATIO_18_1, False)
 motor_1_motor_b = Motor(Ports.PORT11, GearSetting.RATIO_18_1, False)
-motor_1 = MotorGroup(motor_1_motor_a, motor_1_motor_b)
+motor_drivetrain_left = MotorGroup(motor_1_motor_a, motor_1_motor_b)
 motor_2_motor_a = Motor(Ports.PORT19, GearSetting.RATIO_18_1, True)
 motor_2_motor_b = Motor(Ports.PORT20, GearSetting.RATIO_18_1, True)
-motor_2 = MotorGroup(motor_2_motor_a, motor_2_motor_b)
+motor_drivetrain_right = MotorGroup(motor_2_motor_a, motor_2_motor_b)
 
 
-motor_traparm = Motor(Ports.PORT6, GearSetting.RATIO_36_1, False)
-
-motor_traparm.reset_position()
-
-limit_traparm = Limit(brain.three_wire_port.h)
 brain_inertial.calibrate()
 
 # wait for rotation sensor to fully initialize
 wait(30, MSEC)
 
 
-#endregion VEXcode Generated Robot Configuration
+#endregion Robot Configuration
 autopilot = False
 class DataPoint:
+    """DataPoint for Logger
+    """
     def __init__(self,f,*a) -> None:
         self.f = f
         self.a = a
     def __call__(self):
         return self.f(*self.a)
+    
 class Logger:
     def __init__(self,items,keys) -> None:
+        """_summary_
+
+        Args:
+            items (dict[str,DataPoint]): headders and DataPoints for logs
+            keys (list[str]): organised keys of items
+        """
         self.items = items
         self.keys = keys
         self.id = 0
         self.reset()
     def reset(self):
+        """resets logs
+        """        
         self.lastPoi = -1
         self.data = "time,"
         self.line(self.keys)
         
     def line(self,items,time=0):
+        """logs a line
+
+        Args:
+            items (list[DataPoint]): list of data points
+            time (int, optional): timestamp. Defaults to 0.
+        """
         line = ''
         for i in items:
             line += str(i) + ","
@@ -66,6 +78,8 @@ class Logger:
                 data.append(v())
             self.line(data,timestamp)
     def save(self):
+        """saves logs then resets
+        """
         if brain.sdcard.savefile("matchData%s.csv" % (self.id),bytearray(self.data,'utf-8')) == 0:
             brain.screen.print('Save Faled')
         else:
@@ -145,18 +159,38 @@ class Anunciator:
         for i in self.statz:
             self.draw(i)
     def draw(self,c):
+        """draws char to screen
+
+        Args:
+            c (str): the charicter, must be registered to status and statz
+        """
         controller_1.screen.set_cursor(1,self.status[c]+1)
         if self.stat[self.status[c]]:
             controller_1.screen.print(c)
         else:
             controller_1.screen.print("-")
     def tgl(self,c):
+        """toggles char on screen
+
+        Args:
+            c (str): the charicter, must be registered to status and statz
+        """
         self.stat[self.status[c]] = not self.stat[self.status[c]]
         self.draw(c)
     def disable(self,c):
+        """disables char on screen
+
+        Args:
+            c (str): the charicter, must be registered to status and statz
+        """
         self.stat[self.status[c]] = False
         self.draw(c)
     def warn(self,c):
+        """toggles char on screen and indicates a warn
+
+        Args:
+            c (str): the charicter, must be registered to status and statz
+        """
         self.tgl(c)
         if self.stat[self.status[c]]:
             controller_1.rumble("...---...") # sos
@@ -172,14 +206,13 @@ class Status_Warnings:
         self.states = {
             "T":False
         }
-    def draw(self,text,bool):
-        controller_1.screen.set_cursor(self.draw_pos[text],1)
-        if bool:
-            controller_1.screen.print(text)
-        else:
-            controller_1.screen.print("-")
 
     def temps(self,val):
+        """triggers a motor temp warning if val > 40
+
+        Args:
+            val (int): max motor temp
+        """
         self.Temps = val
         if val > 40:
             self.states['T'] = True
@@ -225,56 +258,25 @@ btnz = {
 class State:
     def __init__(self) -> None:
         self.mode = modes.mode1
-        self.errors = 0
-
-    def call_btn_press(self,btn):
-        def exec():
-            if self.mode == modes.mode1:
-                f = self.M1.get(btn)
-                if f:
-                    f.press()
-            elif self.mode == modes.mode2:
-                f = self.M2.get(btn)
-                if f:
-                    f.press()
-        return exec
-    
-    def call_btn_rel(self,btn):
-        def exec():
-            if self.mode == modes.mode1:
-                f = self.M1.get(btn)
-                if f:
-                    f.release()
-            elif self.mode == modes.mode2:
-                f = self.M2.get(btn)
-                if f:
-                    f.release()
-        return exec
-    
+        self.errors = 0    
 
     def driverNeeded(self,func):
         def wrapper(*args, **kwargs):
             if self.mode != modes.stop and self.mode != modes.ap:
                 func(*args, **kwargs)
-            
-            #func(*args, **kwargs)
         return wrapper
-    
 
     def autopilotOnly(self,func):
         def wrapper(*args, **kwargs):
             if self.mode == modes.ap:
                 func(*args, **kwargs)
-            #func(*args, **kwargs)
         return wrapper
 
 #max speeds
 
 steer_speed_mult = 1 #0.5
-gas_speed_mult = 1
 autopilot_max_speed = 50 
 driver_pilot_max_speed = 100 
-
 
 
 def clamp(n, min, max): 
@@ -329,6 +331,7 @@ class speedControlls:
     def stop(self):
         self.Adrive(0,0)
 
+    #region Arcade Controls
     def calcSpeed(self,inv):
         if inv:
             spdDiff = -self.diff
@@ -337,8 +340,8 @@ class speedControlls:
         return clamp(self.speed - spdDiff,-self.max_speed,self.max_speed)*self.speed_mult
 
     def calcMotors(self):
-        motor_1.set_velocity(self.calcSpeed(False), PERCENT)
-        motor_2.set_velocity(self.calcSpeed(True), PERCENT)
+        motor_drivetrain_left.set_velocity(self.calcSpeed(False), PERCENT)
+        motor_drivetrain_right.set_velocity(self.calcSpeed(True), PERCENT)
         status.temps(max(motor_1_motor_a.temperature(),motor_1_motor_b.temperature(),motor_2_motor_a.temperature(),motor_2_motor_b.temperature()))
 
     @state.driverNeeded
@@ -357,20 +360,25 @@ class speedControlls:
         pos = controller_1.axis4.position()
         self.diff = pos
         self.calcMotors()
+    #endregion Arcade Controls
     
     @state.driverNeeded
     def drive(self):
+        """robot drive controls
+        """
         log()
-        pos = controller_1.axis3.position()
-        R = clamp(pos,-self.max_speed,self.max_speed)*self.speed_mult
         pos = controller_1.axis2.position()
         L = clamp(pos,-self.max_speed,self.max_speed)*self.speed_mult
-        motor_1.set_velocity(L, PERCENT)
-        motor_2.set_velocity(R, PERCENT)
+        pos = controller_1.axis3.position()
+        R = clamp(pos,-self.max_speed,self.max_speed)*self.speed_mult
+        motor_drivetrain_left.set_velocity(L, PERCENT)
+        motor_drivetrain_right.set_velocity(R, PERCENT)
         status.temps(max(motor_1_motor_a.temperature(),motor_1_motor_b.temperature(),motor_2_motor_a.temperature(),motor_2_motor_b.temperature()))
     
     @state.autopilotOnly
     def driveSequence(self):
+        """Autopilot driveSequence
+        """
         self.Adrive(90,20)
         wait(1200)
         log()
@@ -383,8 +391,6 @@ class speedControlls:
         #wait(100)
         #self.stop()
         pass
-        
-
         
 
 speed = speedControlls(driver_pilot_max_speed)
@@ -401,73 +407,24 @@ def driver():
 
 #competition.autonomous = autonomous_start
 
+#region buttons
 
-speedMode = ButtonBinding('L2',modes.mode1)
-@status.restrict_all
-@speedMode.Press
+save = ButtonBinding('b',modes.mode1)
+@save.Press
 def press():
-    if speed.speed_mult>= 0:
-        speed.speed_mult = gas_speed_mult
-    else:
-        speed.speed_mult = -gas_speed_mult
-    anunciator.tgl('G')
+    log.save()
 
-@speedMode.Release
-def release():
-    if speed.speed_mult>= 0:
-        speed.speed_mult = steer_speed_mult
-    else:
-        speed.speed_mult = -steer_speed_mult
-    anunciator.tgl('G')
-
+#endregion
 
 INITD = False
-ARM = True
 
-
-ArmBtn = ButtonBinding('R2',modes.mode1)
-
-def Arm():
-    global ARM
-    if INITD:
-        if ARM:
-            motor_traparm.spin_to_position(0,DEGREES,25,RPM,True)
-            #while not limit_pokearm.pressing():
-            #    wait(100)
-            motor_traparm.stop(COAST)
-        else:
-            motor_traparm.spin_to_position(-180,DEGREES,25,RPM,True)
-            
-            motor_traparm.stop(HOLD)
-        ARM = not ARM
-        anunciator.tgl('A')
-        log()
-@ArmBtn.Press
-def press():
-    Arm()
 
 def init():
-    global ARM, INITD
+    global INITD
     log()
     if not INITD and competition.is_enabled():
         INITD = True
         anunciator.tgl('R')
-
-        """if not limit_traparm.pressing():
-            anunciator.tgl('A')
-            motor_traparm.spin_to_position(180,DEGREES,15,RPM,False)
-            while not limit_traparm.pressing():
-                wait(100)
-                controller_1.rumble(".")
-            motor_traparm.stop(COAST)
-            
-            anunciator.tgl('A')
-        motor_traparm.reset_position()
-        #lower arm
-        motor_traparm.spin_to_position(-180,DEGREES,25,RPM)
-        anunciator.tgl('A')
-
-        controller_1.rumble(".")"""
 
         anunciator.warn('R')
         if brain.sdcard.is_inserted():
@@ -476,19 +433,19 @@ def init():
             anunciator.tgl("S")    
 
 
-save = ButtonBinding('b',modes.mode1)
-@save.Press
-def press():
-    log.save()
-
 competition=Competition(driver,autonomous_start)
 init()
 #brain_inertial.collision()
-# Register event with a callback function.
+
+#region Arcade
 #controller_1.axis3.changed(speed.mspeed)
 #controller_1.axis4.changed(speed.dspeed)
+#speed.calcMotors()
+#endregion
+
 controller_1.axis3.changed(speed.drive)
 controller_1.axis2.changed(speed.drive)
-motor_1.spin(FORWARD)
-motor_2.spin(FORWARD)
-speed.calcMotors()
+
+motor_drivetrain_left.spin(FORWARD)
+motor_drivetrain_right.spin(FORWARD)
+speed.drive()
