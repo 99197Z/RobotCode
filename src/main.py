@@ -33,8 +33,8 @@ class DataPoint:
         self.f = f
         self.a = a
     def __call__(self):
-        return self.f(*self.a)
-    
+        return self.f(*self.a)  
+
 class Logger:
     def __init__(self,items,keys) -> None:
         """_summary_
@@ -418,7 +418,6 @@ def press():
 
 INITD = False
 
-
 def init():
     global INITD
     log()
@@ -431,7 +430,6 @@ def init():
             pass
         else:
             anunciator.tgl("S")    
-
 
 competition=Competition(driver,autonomous_start)
 init()
