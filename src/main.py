@@ -17,6 +17,7 @@ motor_2_motor_a = Motor(Ports.PORT19, GearSetting.RATIO_18_1, True)
 motor_2_motor_b = Motor(Ports.PORT20, GearSetting.RATIO_18_1, True)
 motor_drivetrain_right = MotorGroup(motor_2_motor_a, motor_2_motor_b)
 
+motor_puncher = Motor(Ports.PORT15,GearSetting.RATIO_18_1)
 
 brain_inertial.calibrate()
 
@@ -150,10 +151,10 @@ class Anunciator:
         "T":1,
         "G":2,
         "r":3,
-        'A':4,
+        'M':4,
         'S':5
     }
-    statz = ["R","T","G",'r','A',"S"]
+    statz = ["R","T","G",'r','M',"S"]
     def __init__(self) -> None:
         self.stat = [False for i in self.statz]
         for i in self.statz:
@@ -234,13 +235,11 @@ class Status_Warnings:
         return wrapper
 status = Status_Warnings()
 
-
 class ButtonDirectCall(BaseException):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
         self.add_note('button press func called Without A/P')
         
-
 btnz = {
     "a":controller_1.buttonA,
     "b":controller_1.buttonB,
@@ -408,6 +407,32 @@ def driver():
 #competition.autonomous = autonomous_start
 
 #region buttons
+    
+modeSwitch = ButtonBinding("down",modes.mode1)
+
+@modeSwitch.Press
+def press():
+    state.mode = modes.mode2
+    controller_1.rumble('.')
+    anunciator.tgl('M')
+
+modeSwitch2 = ButtonBinding("down",modes.mode2)
+
+@modeSwitch2.Press
+def press():
+    state.mode = modes.mode1
+    controller_1.rumble('.')
+    anunciator.tgl('M')
+
+puncher = ButtonBinding('R2',modes.mode1)
+
+@puncher.Press
+def press():
+    motor_puncher.set_velocity(200,RPM)
+
+@puncher.Release
+def release():
+    motor_puncher.set_velocity(0,RPM)
 
 save = ButtonBinding('b',modes.mode1)
 @save.Press
@@ -424,6 +449,8 @@ def init():
     if not INITD and competition.is_enabled():
         INITD = True
         anunciator.tgl('R')
+
+        motor_puncher.set_velocity(0,RPM)
 
         anunciator.warn('R')
         if brain.sdcard.is_inserted():
@@ -446,4 +473,5 @@ controller_1.axis2.changed(speed.drive)
 
 motor_drivetrain_left.spin(FORWARD)
 motor_drivetrain_right.spin(FORWARD)
+motor_puncher.spin(FORWARD)
 speed.drive()
