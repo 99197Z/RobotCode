@@ -406,6 +406,7 @@ class speedControlls:
     #endregion Arcade Controls
     #region Tank Controls
     @state.driverNeeded
+    @status.tempCheck
     def drive(self):
         """robot drive controls
         """
@@ -416,7 +417,6 @@ class speedControlls:
         R = clamp(pos,-self.max_speed,self.max_speed)*self.speed_mult
         motor_drivetrain_left.set_velocity(L, PERCENT)
         motor_drivetrain_right.set_velocity(R, PERCENT)
-        
 
     #endregion Tank Controls
     
