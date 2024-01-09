@@ -27,6 +27,10 @@ wait(30, MSEC)
 
 #endregion Robot Configuration
 autopilot = False
+
+def NoFunc(*args):
+    pass
+
 class DataPoint:
     """DataPoint for Logger
     """
@@ -152,19 +156,13 @@ class modes:
     mode2 = 3
 
 class Anunciator:
-    status = {
-        "R":0,
-        "T":1,
-        "G":2,
-        "r":3,
-        'M':4,
-        'S':5
-    }
     statz = ["R","T","G",'r','M',"S"]
     def __init__(self) -> None:
+        self.status = {}
         self.stat = [False for i in self.statz]
-        for i in self.statz:
-            self.draw(i)
+        for i,I in enumerate(self.statz):
+            status[I] = i
+            self.draw(I)
     def draw(self,c):
         """draws char to screen
 
@@ -214,6 +212,12 @@ class Status_Warnings:
             "T":False
         }
 
+    def tempCheck(self,func):
+        def wrapper(*args,**kwargs):
+            self.temps(max(motor_1_motor_a.temperature(),motor_1_motor_b.temperature(),motor_2_motor_a.temperature(),motor_2_motor_b.temperature()))
+            return func(*args,**kwargs)
+        return wrapper
+    
     def temps(self,val):
         """triggers a motor temp warning if val > 40
 
@@ -319,9 +323,36 @@ class ButtonBinding:
         #self.release = func
         def wrapper(*arg,**kwargs):
             raise ButtonDirectCall(func,self)
-        return wrapper
-    
+        return wrapper 
+class StickBinding:
+    def __init__(self) -> None:
+        self.axis = {
+            modes.mode1: {
+                1:NoFunc,
+                2:NoFunc,
+                3:NoFunc,
+                4:NoFunc
+            },
+            modes.mode2: {
+                1:NoFunc,
+                2:NoFunc,
+                3:NoFunc,
+                4:NoFunc
+            }
+        }
+    def Change(self,mode,axis):
+        def decorator(func):
+            self.axis[mode][axis] = func
+            def wrapper(*arg,**kwargs):
+                return func(*arg,**kwargs)
+            return wrapper
+        return decorator
+    def handle(self,axis):
+        def stickAxis():
+            self.axis[state.mode][axis]()
+        return stickAxis
 class speedControlls:
+    sticks = StickBinding()
     def __init__(self,mx):
         self.diff = 0
         self.speed = 0
@@ -344,29 +375,36 @@ class speedControlls:
             spdDiff = self.diff
         return clamp(self.speed - spdDiff,-self.max_speed,self.max_speed)*self.speed_mult
 
+    @status.tempCheck
     def calcMotors(self):
         motor_drivetrain_left.set_velocity(self.calcSpeed(False), PERCENT)
         motor_drivetrain_right.set_velocity(self.calcSpeed(True), PERCENT)
         status.temps(max(motor_1_motor_a.temperature(),motor_1_motor_b.temperature(),motor_2_motor_a.temperature(),motor_2_motor_b.temperature()))
 
+    @sticks.Change(modes.mode1,3)
     @state.driverNeeded
-    def mspeed(self):
-        pos = controller_1.axis3.position()
-        brain.screen.set_cursor(1,1)
-        brain.screen.clear_screen()
-        brain.screen.print(str(pos))
-        brain.screen.set_cursor(2,2)
+    def mspeed(self,mod=0.5):
+        pos = controller_1.axis3.position()*mod
         brain.screen.print(str(self.speed_mult))
         self.speed = pos
         self.calcMotors()
 
+    @sticks.Change(modes.mode1,2)
+    def Mspeed(self):
+        self.mspeed(1.0)
+
+    @sticks.Change(modes.mode1,4)
     @state.driverNeeded
-    def dspeed(self):
-        pos = controller_1.axis4.position()
+    def dspeed(self,mod=0.5):
+        pos = controller_1.axis4.position()*mod
         self.diff = pos
         self.calcMotors()
+
+    @sticks.Change(modes.mode1,1)
+    def Dspeed(self):
+        self.dspeed(1.0)
     #endregion Arcade Controls
-    
+    #region Tank Controls
     @state.driverNeeded
     def drive(self):
         """robot drive controls
@@ -378,7 +416,9 @@ class speedControlls:
         R = clamp(pos,-self.max_speed,self.max_speed)*self.speed_mult
         motor_drivetrain_left.set_velocity(L, PERCENT)
         motor_drivetrain_right.set_velocity(R, PERCENT)
-        status.temps(max(motor_1_motor_a.temperature(),motor_1_motor_b.temperature(),motor_2_motor_a.temperature(),motor_2_motor_b.temperature()))
+        
+
+    #endregion Tank Controls
     
     @state.autopilotOnly
     def driveSequence(self):
