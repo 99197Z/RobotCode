@@ -28,7 +28,8 @@ wait(30, MSEC)
 #endregion Robot Configuration
 autopilot = False
 
-def NoFunc(*args):
+def NoFunc(*args, **kwargs):
+    print('NF')
     pass
 
 class DataPoint:
@@ -156,13 +157,16 @@ class modes:
     mode2 = 3
 
 class Anunciator:
-    statz = ["R","T","G",'r','M',"S"]
     def __init__(self) -> None:
-        self.status = {}
-        self.stat = [False for i in self.statz]
-        for i,I in enumerate(self.statz):
-            status[I] = i
+        self.statz = ["R","T","G",'r','M',"S"]
+        self.status = dict(zip(self.statz,range(0,len(self.statz))))
+
+        self.stat = {i: False for i in self.statz}
+        i = 0
+        for I in self.statz:
+            #status[I] = i
             self.draw(I)
+            i += 1
     def draw(self,c):
         """draws char to screen
 
@@ -170,7 +174,7 @@ class Anunciator:
             c (str): the charicter, must be registered to status and statz
         """
         controller_1.screen.set_cursor(1,self.status[c]+1)
-        if self.stat[self.status[c]]:
+        if self.stat[c]:
             controller_1.screen.print(c)
         else:
             controller_1.screen.print("-")
@@ -180,7 +184,7 @@ class Anunciator:
         Args:
             c (str): the charicter, must be registered to status and statz
         """
-        self.stat[self.status[c]] = not self.stat[self.status[c]]
+        self.stat[c] = not self.stat[c]
         self.draw(c)
     def disable(self,c):
         """disables char on screen
@@ -188,7 +192,7 @@ class Anunciator:
         Args:
             c (str): the charicter, must be registered to status and statz
         """
-        self.stat[self.status[c]] = False
+        self.stat[c] = False
         self.draw(c)
     def warn(self,c):
         """toggles char on screen and indicates a warn
@@ -197,7 +201,7 @@ class Anunciator:
             c (str): the charicter, must be registered to status and statz
         """
         self.tgl(c)
-        if self.stat[self.status[c]]:
+        if self.stat[c]:
             controller_1.rumble("...---...") # sos
         else:
             controller_1.rumble(".")
@@ -340,6 +344,10 @@ class StickBinding:
                 4:NoFunc
             }
         }
+        controller_1.axis4.changed(self.handle(4))
+        controller_1.axis3.changed(self.handle(3))
+        controller_1.axis2.changed(self.handle(2))
+        controller_1.axis1.changed(self.handle(1))
     def Change(self,mode,axis):
         def decorator(func):
             self.axis[mode][axis] = func
@@ -380,9 +388,9 @@ class speedControlls:
         motor_drivetrain_left.set_velocity(self.calcSpeed(False), PERCENT)
         motor_drivetrain_right.set_velocity(self.calcSpeed(True), PERCENT)
         status.temps(max(motor_1_motor_a.temperature(),motor_1_motor_b.temperature(),motor_2_motor_a.temperature(),motor_2_motor_b.temperature()))
-
-    @sticks.Change(modes.mode1,3)
+    
     @state.driverNeeded
+    @sticks.Change(modes.mode1,3)
     def mspeed(self,mod=0.5):
         pos = controller_1.axis3.position()*mod
         brain.screen.print(str(self.speed_mult))
@@ -393,20 +401,24 @@ class speedControlls:
     def Mspeed(self):
         self.mspeed(1.0)
 
-    @sticks.Change(modes.mode1,4)
     @state.driverNeeded
-    def dspeed(self,mod=0.5):
+    def dspeed(self,mod):
         pos = controller_1.axis4.position()*mod
         self.diff = pos
         self.calcMotors()
 
     @sticks.Change(modes.mode1,1)
-    def Dspeed(self):
+    def hDspeed(self):
         self.dspeed(1.0)
+
+    @sticks.Change(modes.mode1,4)
+    def lDspeed(self):
+        self.dspeed(0.5)
     #endregion Arcade Controls
     #region Tank Controls
     @state.driverNeeded
     @status.tempCheck
+    @sticks.Change(modes.mode2,3)
     def drive(self):
         """robot drive controls
         """
@@ -514,8 +526,7 @@ init()
 #speed.calcMotors()
 #endregion
 
-controller_1.axis3.changed(speed.drive)
-controller_1.axis2.changed(speed.drive)
+
 
 motor_drivetrain_left.spin(FORWARD)
 motor_drivetrain_right.spin(FORWARD)
