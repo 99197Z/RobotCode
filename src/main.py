@@ -19,6 +19,12 @@ motor_drivetrain_right = MotorGroup(motor_2_motor_a, motor_2_motor_b)
 
 motor_puncher = Motor(Ports.PORT15,GearSetting.RATIO_18_1)
 
+led_tlem_r_1 = Led(brain.three_wire_port.a)
+led_tlem_r_2 = Led(brain.three_wire_port.b)
+
+led_tlem_y_1 = Led(brain.three_wire_port.c)
+led_tlem_y_2 = Led(brain.three_wire_port.d)
+
 brain_inertial.calibrate()
 
 # wait for rotation sensor to fully initialize
@@ -156,13 +162,32 @@ class modes:
     mode2 = 3
 
 class Anunciator:
+    status = {
+        "R":0,
+        "T":1,
+        "G":2,
+        "r":3,
+        'M':4,
+        'S':5
+    }
     statz = ["R","T","G",'r','M',"S"]
     def __init__(self) -> None:
-        self.status = {}
         self.stat = [False for i in self.statz]
-        for i,I in enumerate(self.statz):
-            status[I] = i
+        #i = 0
+        for I in (self.statz):
+            #status[I] = i
             self.draw(I)
+            #i += 0
+    def setLED(self,led:Led,b):
+        if b:
+            led.on()
+        else:
+            led.off()
+    def code(self,i):
+        self.setLED(led_tlem_r_1,bool(i & 1))
+        self.setLED(led_tlem_r_2,bool(i & 2))
+        self.setLED(led_tlem_y_1,bool(i & 4))
+        self.setLED(led_tlem_y_2,bool(i & 8))
     def draw(self,c):
         """draws char to screen
 
@@ -231,9 +256,11 @@ class Status_Warnings:
             anunciator.warn('T')
             controller_1.screen.set_cursor(2,1)
             controller_1.screen.print(val)
+            anunciator.code(0b1100)
 
         elif self.states['T']:
             self.states['T'] = False
+            anunciator.code(0b0000)
             anunciator.warn('T')
 
     def restrict_all(self,func):
@@ -493,6 +520,7 @@ def init():
     global INITD
     log()
     if not INITD and competition.is_enabled():
+        
         INITD = True
         anunciator.tgl('R')
 
@@ -502,6 +530,7 @@ def init():
         if brain.sdcard.is_inserted():
             pass
         else:
+            anunciator.code(0b1001)
             anunciator.tgl("S")    
 
 competition=Competition(driver,autonomous_start)
