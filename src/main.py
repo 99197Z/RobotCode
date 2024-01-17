@@ -117,8 +117,10 @@ log = Logger({
     "DAR Torque": DataPoint(motor_2_motor_b.torque),
     "DAR Velocity": DataPoint(motor_2_motor_b.velocity),
     
-    "Pchr Temp": DataPoint(motor_puncher.temperature),
-    "Pchr Velocity": DataPoint(motor_puncher.velocity)
+    "PCHR Temp": DataPoint(motor_puncher.temperature),
+    "PCHR Current": DataPoint(motor_puncher.current),
+    "PCHR Torque": DataPoint(motor_puncher.torque),
+    "PCHR Velocity": DataPoint(motor_puncher.velocity),
 
 },[
     "X",
@@ -145,8 +147,10 @@ log = Logger({
     "DAR Torque",
     "DAR Velocity",
 
-    "Pchr Temp",
-    "Pchr Velocity",
+    "PCHR Temp",
+    "PCHR Current",
+    "PCHR Torque",
+    "PCHR Velocity",
 ])
 
 class modes:
