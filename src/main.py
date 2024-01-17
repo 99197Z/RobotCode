@@ -3,6 +3,8 @@
 from vex import *
 import urandom
 
+MOTOR_OVERHEAT = 40
+
 # Brain should be defined by default
 brain=Brain()
 brain_inertial = Inertial(Ports.PORT1)
@@ -16,6 +18,13 @@ motor_drivetrain_left = MotorGroup(motor_1_motor_a, motor_1_motor_b)
 motor_2_motor_a = Motor(Ports.PORT11, GearSetting.RATIO_18_1, True)
 motor_2_motor_b = Motor(Ports.PORT12, GearSetting.RATIO_18_1, True)
 motor_drivetrain_right = MotorGroup(motor_2_motor_a, motor_2_motor_b)
+
+DRVmotors = {
+    0x10 :motor_1_motor_a,
+    0x11 :motor_1_motor_b,
+    0x00 :motor_2_motor_a,
+    0x01 :motor_2_motor_b
+}
 
 motor_puncher = Motor(Ports.PORT15,GearSetting.RATIO_18_1,True)
 
@@ -253,23 +262,26 @@ class Status_Warnings:
         return wrapper
     
     def temps(self,val):
-        """triggers a motor temp warning if val > 40
+        """triggers a motor temp warning if val > MOTOR_OVERHEAT
 
         Args:
             val (int): max motor temp
         """
         self.Temps = val
-        if val > 40:
+        if val > MOTOR_OVERHEAT and (not self.states['T']):
             self.states['T'] = True
             self.restrict = True
             anunciator.warn('T')
+            for i,m in DRVmotors.items():
+                if m.temperature() > MOTOR_OVERHEAT:
+                    anunciator.code(0b1100+i)
             controller_1.screen.set_cursor(2,1)
             controller_1.screen.print(val)
-            anunciator.code(0b1100)
+            
 
         elif self.states['T']:
             self.states['T'] = False
-            anunciator.codeRestore()
+            anunciator.code(0b0000+i)
             anunciator.warn('T')
 
     def restrict_all(self,func):
