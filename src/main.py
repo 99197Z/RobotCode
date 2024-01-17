@@ -10,14 +10,14 @@ brain_inertial = Inertial(Ports.PORT1)
 
 # Robot connections
 controller_1 = Controller(PRIMARY)
-motor_1_motor_a = Motor(Ports.PORT12, GearSetting.RATIO_18_1, False)
-motor_1_motor_b = Motor(Ports.PORT11, GearSetting.RATIO_18_1, False)
+motor_1_motor_a = Motor(Ports.PORT19, GearSetting.RATIO_18_1, False)
+motor_1_motor_b = Motor(Ports.PORT20, GearSetting.RATIO_18_1, False)
 motor_drivetrain_left = MotorGroup(motor_1_motor_a, motor_1_motor_b)
-motor_2_motor_a = Motor(Ports.PORT19, GearSetting.RATIO_18_1, True)
-motor_2_motor_b = Motor(Ports.PORT20, GearSetting.RATIO_18_1, True)
+motor_2_motor_a = Motor(Ports.PORT11, GearSetting.RATIO_18_1, True)
+motor_2_motor_b = Motor(Ports.PORT12, GearSetting.RATIO_18_1, True)
 motor_drivetrain_right = MotorGroup(motor_2_motor_a, motor_2_motor_b)
 
-motor_puncher = Motor(Ports.PORT15,GearSetting.RATIO_18_1)
+motor_puncher = Motor(Ports.PORT15,GearSetting.RATIO_18_1,True)
 
 led_tlem_r_1 = Led(brain.three_wire_port.a)
 led_tlem_r_2 = Led(brain.three_wire_port.b)
@@ -173,6 +173,8 @@ class Anunciator:
     statz = ["R","T","G",'r','M',"S"]
     def __init__(self) -> None:
         self.stat = [False for i in self.statz]
+        self.LEDCODE = 0
+        self.Old_LEDCODE = 0
         #i = 0
         for I in (self.statz):
             #status[I] = i
@@ -184,10 +186,17 @@ class Anunciator:
         else:
             led.off()
     def code(self,i):
-        self.setLED(led_tlem_r_1,bool(i & 1))
-        self.setLED(led_tlem_r_2,bool(i & 2))
-        self.setLED(led_tlem_y_1,bool(i & 4))
-        self.setLED(led_tlem_y_2,bool(i & 8))
+        self.Old_LEDCODE = self.LEDCODE
+        self.LEDCODE = i
+        self.setLED(led_tlem_r_1,bool(i & 8))
+        self.setLED(led_tlem_r_2,bool(i & 4))
+        self.setLED(led_tlem_y_1,bool(i & 2))
+        self.setLED(led_tlem_y_2,bool(i & 1))
+    def codeRestore(self):
+        old = self.Old_LEDCODE
+        self.Old_LEDCODE = self.LEDCODE
+        self.LEDCODE = old
+        self.code(old)
     def draw(self,c):
         """draws char to screen
 
@@ -260,7 +269,7 @@ class Status_Warnings:
 
         elif self.states['T']:
             self.states['T'] = False
-            anunciator.code(0b0000)
+            anunciator.codeRestore()
             anunciator.warn('T')
 
     def restrict_all(self,func):
@@ -510,7 +519,10 @@ def release():
 save = ButtonBinding('b',modes.mode1)
 @save.Press
 def press():
+    anunciator.code(0b1010)
     log.save()
+    sleep(2,SECONDS)
+    anunciator.codeRestore()
 
 #endregion
 
@@ -531,7 +543,10 @@ def init():
             pass
         else:
             anunciator.code(0b1001)
-            anunciator.tgl("S")    
+            anunciator.tgl("S")
+            sleep(2,SECONDS)
+            anunciator.codeRestore()    
+        anunciator.code(0b0000)
 
 competition=Competition(driver,autonomous_start)
 init()
