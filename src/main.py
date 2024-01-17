@@ -199,12 +199,12 @@ class Anunciator:
         else:
             led.off()
     def code(self,i):
-        self.Old_LEDCODE = self.LEDCODE
+        self.Old_LEDCODE = self.LEDCODE # alows for restoring 
         self.LEDCODE = i
-        self.setLED(led_tlem_r_1,bool(i & 8))
-        self.setLED(led_tlem_r_2,bool(i & 4))
-        self.setLED(led_tlem_y_1,bool(i & 2))
-        self.setLED(led_tlem_y_2,bool(i & 1))
+        self.setLED(led_tlem_r_1,bool(i & 8))# RED 
+        self.setLED(led_tlem_r_2,bool(i & 4))# RED
+        self.setLED(led_tlem_y_1,bool(i & 2))# Yellow
+        self.setLED(led_tlem_y_2,bool(i & 1))# Yellow
     def codeRestore(self):
         old = self.Old_LEDCODE
         self.Old_LEDCODE = self.LEDCODE
