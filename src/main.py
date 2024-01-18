@@ -85,7 +85,8 @@ class Logger:
         for i in items:
             line += str(i) + ","
         self.data += line[0:-1] + "\n"
-        if len(self.data) > 5000:
+        if len(self.data) > 50000:
+            print('saver')
             self.save()
 
     def __call__(self):
@@ -104,6 +105,7 @@ class Logger:
             brain.screen.print('Save Faled')
         else:
             brain.screen.print('Saved')
+            print('save')
         self.reset()
         self.id +=1
 
@@ -113,28 +115,22 @@ log = Logger({
     "Z":DataPoint(brain_inertial.acceleration,ZAXIS),
 
     "DFL Temp": DataPoint(motor_1_motor_a.temperature),
-    "DFL Current": DataPoint(motor_1_motor_a.current),
     "DFL Torque": DataPoint(motor_1_motor_a.torque),
     "DFL Velocity": DataPoint(motor_1_motor_a.velocity),
 
     "DAL Temp": DataPoint(motor_1_motor_b.temperature),
-    "DAL Current": DataPoint(motor_1_motor_b.current),
     "DAL Torque": DataPoint(motor_1_motor_b.torque),
     "DAL Velocity": DataPoint(motor_1_motor_b.velocity),
 
     "DFR Temp": DataPoint(motor_2_motor_a.temperature),
-    "DFR Current": DataPoint(motor_2_motor_a.current),
     "DFR Torque": DataPoint(motor_2_motor_a.torque),
     "DFR Velocity": DataPoint(motor_2_motor_a.velocity),
 
     "DAR Temp": DataPoint(motor_2_motor_b.temperature),
-    "DAR Current": DataPoint(motor_2_motor_b.current),
     "DAR Torque": DataPoint(motor_2_motor_b.torque),
     "DAR Velocity": DataPoint(motor_2_motor_b.velocity),
     
     "PCHR Temp": DataPoint(motor_puncher.temperature),
-    "PCHR Current": DataPoint(motor_puncher.current),
-    "PCHR Torque": DataPoint(motor_puncher.torque),
     "PCHR Velocity": DataPoint(motor_puncher.velocity),
 
 },[
@@ -143,28 +139,22 @@ log = Logger({
     "Z",
 
     "DFL Temp",
-    "DFL Current",
     "DFL Torque",
     "DFL Velocity",
 
     "DAL Temp",
-    "DAL Current",
     "DAL Torque",
     "DAL Velocity",
 
     "DFR Temp",
-    "DFR Current",
     "DFR Torque",
     "DFR Velocity",
 
     "DAR Temp",
-    "DAR Current",
     "DAR Torque",
     "DAR Velocity",
 
     "PCHR Temp",
-    "PCHR Current",
-    "PCHR Torque",
     "PCHR Velocity",
 ])
 
