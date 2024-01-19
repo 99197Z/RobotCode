@@ -1,7 +1,7 @@
 #Code By Ben H
 #region Robot Configuration
 from vex import *
-import urandom
+import urandom,math
 
 MOTOR_OVERHEAT = 40
 
@@ -11,12 +11,16 @@ brain_inertial = Inertial(Ports.PORT1)
 
 
 # Robot connections
+
+DRIVE_GEAR_RATIO = 5/9
+WHEEL_D = 0.104
+
 controller_1 = Controller(PRIMARY)
-motor_1_motor_a = Motor(Ports.PORT19, GearSetting.RATIO_18_1, False)
-motor_1_motor_b = Motor(Ports.PORT20, GearSetting.RATIO_18_1, False)
+motor_1_motor_a = Motor(Ports.PORT19, GearSetting.RATIO_18_1, True)
+motor_1_motor_b = Motor(Ports.PORT20, GearSetting.RATIO_18_1, True)
 motor_drivetrain_left = MotorGroup(motor_1_motor_a, motor_1_motor_b)
-motor_2_motor_a = Motor(Ports.PORT11, GearSetting.RATIO_18_1, True)
-motor_2_motor_b = Motor(Ports.PORT12, GearSetting.RATIO_18_1, True)
+motor_2_motor_a = Motor(Ports.PORT11, GearSetting.RATIO_18_1, False)
+motor_2_motor_b = Motor(Ports.PORT12, GearSetting.RATIO_18_1, False)
 motor_drivetrain_right = MotorGroup(motor_2_motor_a, motor_2_motor_b)
 
 DRVmotors = {
@@ -109,10 +113,22 @@ class Logger:
         self.reset()
         self.id +=1
 
+def drive_TO_ms(rpm):
+    return ((rpm * (DRIVE_GEAR_RATIO))* math.pi * WHEEL_D)/60
+
+def LDRPM():
+    return drive_TO_ms(motor_drivetrain_left.velocity())
+
+def RDRPM():
+    return drive_TO_ms(motor_drivetrain_right.velocity())
+
 log = Logger({
     "X":DataPoint(brain_inertial.acceleration,XAXIS),
     "Y":DataPoint(brain_inertial.acceleration,YAXIS),
     "Z":DataPoint(brain_inertial.acceleration,ZAXIS),
+
+    "L Drive M/S":DataPoint(LDRPM),
+    "R Drive M/S":DataPoint(RDRPM),
 
     "DFL Temp": DataPoint(motor_1_motor_a.temperature),
     "DFL Torque": DataPoint(motor_1_motor_a.torque),
@@ -137,6 +153,9 @@ log = Logger({
     "X",
     "Y",
     "Z",
+
+    "L Drive M/S",
+    "R Drive M/S",
 
     "DFL Temp",
     "DFL Torque",
