@@ -485,12 +485,17 @@ class speedControlls:
     def driveSequence(self):
         """Autopilot driveSequence
         """
-        self.Adrive(90,20)
-        wait(1200)
+
+        self.Adrive(90,0)
+        wait(2000)
         log()
-        self.Adrive(15,-100)
-        wait(100)
+        print('D')
+
+        self.Adrive(100,-100)
+        wait(1000)
         log()
+        print('S')
+        
         self.Adrive(0,0)
         #Arm()
         #self.Adrive(10,0)
