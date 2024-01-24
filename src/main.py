@@ -182,6 +182,7 @@ class modes:
     ap = 1
     mode1 = 2
     mode2 = 3
+    setup = 4
 
 class Anunciator:
     status = {
@@ -328,6 +329,10 @@ btnz = {
 class State:
     def __init__(self) -> None:
         self.mode = modes.mode1
+        #if competition.is_competition_switch():
+            #self.mode = modes.setup
+            #controller_1.rumble("..")
+        #    pass
         self.errors = 0    
 
     def driverNeeded(self,func):
@@ -424,6 +429,7 @@ class speedControlls:
         self.speed = speed
         self.diff = diff
         self.calcMotors()
+        log()
     
     def stop(self):
         self.Adrive(0,0)
@@ -485,22 +491,32 @@ class speedControlls:
     def driveSequence(self):
         """Autopilot driveSequence
         """
-
-        self.Adrive(90,0)
-        wait(2000)
-        log()
-        print('D')
-
-        self.Adrive(100,-100)
-        wait(1000)
-        log()
-        print('S')
-        
-        self.Adrive(0,0)
-        #Arm()
-        #self.Adrive(10,0)
-        #wait(100)
-        #self.stop()
+        glbls = {
+            "Adrive":self.Adrive,
+            "wait":wait,
+            "print":print
+        }
+        if brain.sdcard.is_inserted() :
+            a = bytes(brain.sdcard.loadfile("atton.py")).decode('ascii')
+            print(str(a))
+            exec(str(a),glbls)
+            self.Adrive(0,0)
+        else:
+            self.Adrive(90,0)
+            wait(2000)
+            #log()
+            print('D')
+            
+            self.Adrive(100,-100)
+            wait(1000)
+            #log()
+            print('S')
+            
+            self.Adrive(0,0)
+            #Arm()
+            #self.Adrive(10,0)
+            #wait(100)
+            #self.stop()
         pass
         
 
