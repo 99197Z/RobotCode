@@ -5,12 +5,18 @@ import urandom,math
 
 MOTOR_OVERHEAT = 40
 
+
+A_SIDE =1
+
+
 # Brain should be defined by default
 brain=Brain()
 brain_inertial = Inertial(Ports.PORT1)
 
 
 # Robot connections
+
+
 
 DRIVE_GEAR_RATIO = 5/9
 WHEEL_D = 0.104
@@ -176,6 +182,89 @@ log = Logger({
     "PCHR Temp",
     "PCHR Velocity",
 ])
+
+class Elem:
+    def __init__(self,x,y,t) -> None:
+        self.x = x
+        self.y = y
+        self.t = t
+    def draw(self):
+        brain.screen.set_cursor(self.x,self.y)
+        brain.screen.print(self.t)
+    def click(self,x,y):
+        pass
+
+class Button(Elem):
+    def __init__(self, x, y,w,h,c, t,cb) -> None:
+        super().__init__(x, y, t)
+        self.w = w
+        self.h = h
+        self.cb = cb
+        self.c = c
+    def draw(self):
+        brain.screen.set_pen_color(Color.WHITE)
+        brain.screen.draw_rectangle((self.x-1)*10,(self.y+1)*20,self.w*10,self.h*20,self.c)
+        brain.screen.print_at(self.t,x=(self.x-1)*10,y=(self.y+1.75)*20,opaque=False)
+    def click(self, x, y):
+        if (x>= (self.x-1)*10 and y >= (self.y+1)*20):
+            print("|",(self.w*10)-x,(self.h*20)-y)
+            #brain.screen.draw_line(x,0,x,240)
+            #brain.screen.draw_line(0,y,480,y)
+            if (x<= (self.w+self.x)*10 and y <= (self.h+self.y)*20):
+                print("/")
+                self.cb()
+
+class Rect(Elem):
+    def __init__(self, x, y,w,h,c) -> None:
+        super().__init__(x, y, "")
+        self.w = w
+        self.h = h
+        self.c = c
+    def draw(self):
+        brain.screen.set_pen_color(self.c)
+        brain.screen.draw_rectangle((self.x-1)*10,(self.y+1)*20,self.w*10,self.h*20,Color.TRANSPARENT)
+    
+class UI:
+    def __init__(self) -> None:
+        self.e = []
+        self.EN = True
+    def add(self,e):
+        self.e.append(e)
+    def draw(self):
+        brain.screen.clear_screen()
+        for i in self.e:
+            i.draw()
+    def click(self):
+        if self.EN:
+            x,y = brain.screen.x_position(),brain.screen.y_position()
+            print(x,y)
+            for i in self.e:
+                i.click(x,y)
+            #self.draw()
+
+ui = UI()
+def SEL_ATTON(sd):
+    def w():
+        global A_SIDE
+        A_SIDE = sd
+        ui.EN = False
+        brain.screen.clear_screen()
+    return w
+
+            
+
+ui.add(Elem(1,1,"Robot Atton Sel"))
+
+ui.add(Rect(2.5,0.5,8,8,Color.RED))
+ui.add(Rect(11.5,0.5,8,8,Color.BLUE))
+
+ui.add(Button(3,1,7,3,Color.RED  ," DEFNC ",SEL_ATTON(-1)))
+
+ui.add(Button(3,5,7,3,Color.BLUE ," OFFNC ",SEL_ATTON(1)))
+
+ui.add(Button(12,1,7,3,Color.RED ," OFFNC ",SEL_ATTON(-1)))
+
+ui.add(Button(12,5,7,3,Color.BLUE," DEFNC ",SEL_ATTON(1)))
 
 class modes:
     stop = 0
@@ -427,7 +516,7 @@ class speedControlls:
     @state.autopilotOnly
     def Adrive(self,speed,diff):
         self.speed = speed
-        self.diff = diff
+        self.diff = diff*A_SIDE
         self.calcMotors()
         log()
     
@@ -603,6 +692,10 @@ init()
 #controller_1.axis4.changed(speed.dspeed)
 #speed.calcMotors()
 #endregion
+
+ui.draw()
+
+brain.screen.pressed(ui.click)
 
 controller_1.axis3.changed(speed.drive)
 controller_1.axis2.changed(speed.drive)

@@ -18,3 +18,7 @@ plug in the sd card
 
 #### 0x1010 - Saved
 Log Saved
+
+### 0x0111 - Competition Setup
+use the brain's screen to pick
+NOT IPMLMENTED
