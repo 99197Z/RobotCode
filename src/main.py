@@ -262,7 +262,9 @@ def SEL_ATTON(sd):
         log.log("ATTON: Selected "+str(sd))
         A_SIDE = sd
         ui.EN = False
+        state.preSETUP = False
         brain.screen.clear_screen()
+        DMui.draw()
     return w
 
             
@@ -280,12 +282,33 @@ ui.add(Button(12,1,7,3,Color.RED ," OFFNC ",SEL_ATTON(-1)))
 
 ui.add(Button(12,5,7,3,Color.BLUE," DEFNC ",SEL_ATTON(1)))
 
+
 class modes:
     stop = 0
     ap = 1
     mode1 = 2
     mode2 = 3
-    setup = 4
+
+DMui = UI()
+
+def dmode(m):
+    def w():
+        if state.dm != m:
+            log.log("DM: "+str(m))
+            state.dm = m
+            controller_1.rumble('.')
+            anunciator.tgl('M')
+            if state.mode != modes.ap:
+                state.mode = m
+    return w
+
+
+DMui.add(Elem(1,1,"Robot Drive Sel"))
+
+DMui.add(Button(1,1,6,3,Color.ORANGE," TANK ",dmode(modes.mode2)))
+DMui.add(Button(23,1,5,3,Color.ORANGE," TMP ",dmode(modes.mode1)))
+
+
 
 class Anunciator:
     status = {
@@ -432,11 +455,9 @@ btnz = {
 class State:
     def __init__(self) -> None:
         self.mode = modes.mode1
-        #if competition.is_competition_switch():
-            #self.mode = modes.setup
-            #controller_1.rumble("..")
-        #    pass
+        self.preSETUP = True
         self.errors = 0    
+        self.dm = modes.mode1
 
     def driverNeeded(self,func):
         def wrapper(*args, **kwargs):
@@ -493,35 +514,9 @@ class ButtonBinding:
         def wrapper(*arg,**kwargs):
             raise ButtonDirectCall(func,self)
         return wrapper 
-class StickBinding:
-    def __init__(self) -> None:
-        self.axis = {
-            modes.mode1: {
-                1:NoFunc,
-                2:NoFunc,
-                3:NoFunc,
-                4:NoFunc
-            },
-            modes.mode2: {
-                1:NoFunc,
-                2:NoFunc,
-                3:NoFunc,
-                4:NoFunc
-            }
-        }
-    def Change(self,mode,axis):
-        def decorator(func):
-            self.axis[mode][axis] = func
-            def wrapper(*arg,**kwargs):
-                return func(*arg,**kwargs)
-            return wrapper
-        return decorator
-    def handle(self,axis):
-        def stickAxis():
-            self.axis[state.mode][axis]()
-        return stickAxis
+
 class speedControlls:
-    sticks = StickBinding()
+
     def __init__(self,mx):
         self.diff = 0
         self.speed = 0
@@ -551,28 +546,27 @@ class speedControlls:
         motor_drivetrain_right.set_velocity(self.calcSpeed(True), PERCENT)
         status.temps(max(motor_1_motor_a.temperature(),motor_1_motor_b.temperature(),motor_2_motor_a.temperature(),motor_2_motor_b.temperature()))
 
-    @sticks.Change(modes.mode1,3)
     @state.driverNeeded
-    def mspeed(self,mod=0.5):
-        pos = controller_1.axis3.position()*mod
-        brain.screen.print(str(self.speed_mult))
+    def mspeed(self):
+        pos = controller_1.axis3.position()*0.5
         self.speed = pos
         self.calcMotors()
 
-    @sticks.Change(modes.mode1,2)
     def Mspeed(self):
-        self.mspeed(1.0)
-
-    @sticks.Change(modes.mode1,4)
-    @state.driverNeeded
-    def dspeed(self,mod=0.5):
-        pos = controller_1.axis4.position()*mod
-        self.diff = pos
+        pos = controller_1.axis2.position()*1
+        self.speed = pos
         self.calcMotors()
 
-    @sticks.Change(modes.mode1,1)
+    @state.driverNeeded
+    def dspeed(self):
+        pos = controller_1.axis4.position()*0.5
+        self.diff = -pos
+        self.calcMotors()
+
     def Dspeed(self):
-        self.dspeed(1.0)
+        pos = controller_1.axis1.position()*1
+        self.diff = -pos
+        self.calcMotors()
     #endregion Arcade Controls
     #region Tank Controls
     @state.driverNeeded
@@ -582,9 +576,9 @@ class speedControlls:
         """
         log()
         pos = controller_1.axis2.position()
-        L = clamp(pos,-self.max_speed,self.max_speed)*self.speed_mult
-        pos = controller_1.axis3.position()
         R = clamp(pos,-self.max_speed,self.max_speed)*self.speed_mult
+        pos = controller_1.axis3.position()
+        L = clamp(pos,-self.max_speed,self.max_speed)*self.speed_mult
         motor_drivetrain_left.set_velocity(L, PERCENT)
         motor_drivetrain_right.set_velocity(R, PERCENT)
 
@@ -638,8 +632,9 @@ def autonomous_start():
 def driver():
     log.log("COMP: driver")
     anunciator.code(0b0000)
+    
     init()
-    state.mode = modes.mode1
+    state.mode = state.dm
 
 #competition.autonomous = autonomous_start
 
@@ -649,17 +644,21 @@ modeSwitch = ButtonBinding("down",modes.mode1)
 
 @modeSwitch.Press
 def press():
-    state.mode = modes.mode2
-    controller_1.rumble('.')
-    anunciator.tgl('M')
+    if not competition.is_competition_switch():
+        state.mode = modes.mode2
+        state.dm = modes.mode2
+        controller_1.rumble('.')
+        anunciator.tgl('M')
 
 modeSwitch2 = ButtonBinding("down",modes.mode2)
 
 @modeSwitch2.Press
 def press():
-    state.mode = modes.mode1
-    controller_1.rumble('.')
-    anunciator.tgl('M')
+    if not competition.is_competition_switch():
+        state.mode = modes.mode1
+        state.dm = modes.mode1
+        controller_1.rumble('.')
+        anunciator.tgl('M')
 
 puncher = ButtonBinding('R2',modes.mode1)
 
@@ -713,17 +712,48 @@ inertial.collision(collision)
 #region Arcade
 #controller_1.axis3.changed(speed.mspeed)
 #controller_1.axis4.changed(speed.dspeed)
+#controller_1.axis2.changed(speed.Mspeed)
+#controller_1.axis1.changed(speed.Dspeed)
 #speed.calcMotors()
 #endregion
 
 ui.draw()
 
+def ax1():
+    if state.mode == modes.mode1:
+        speed.Dspeed()
 
+def ax2():
+    if state.mode == modes.mode1:
+        speed.Mspeed()
+    elif state.mode == modes.mode2:
+        speed.drive()
 
-brain.screen.pressed(ui.click)
+def ax3():
+    if state.mode == modes.mode1:
+        speed.mspeed()
+    elif state.mode == modes.mode2:
+        speed.drive()
 
-controller_1.axis3.changed(speed.drive)
-controller_1.axis2.changed(speed.drive)
+def ax4():
+    if state.mode == modes.mode1:
+        speed.dspeed()
+
+controller_1.axis3.changed(ax3)
+controller_1.axis4.changed(ax4)
+controller_1.axis2.changed(ax2)
+controller_1.axis1.changed(ax1)
+
+def touch():
+    if state.preSETUP:
+        ui.click()
+    else:
+        DMui.click()
+
+brain.screen.pressed(touch)
+
+#controller_1.axis3.changed(speed.drive)
+#controller_1.axis2.changed(speed.drive)
 
 motor_drivetrain_left.spin(FORWARD)
 motor_drivetrain_right.spin(FORWARD)
