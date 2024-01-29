@@ -2,7 +2,7 @@
 
 
 ## Error Codes
-### 0x11XY - Motor OverHeat
+### 0b11XY - Motor OverHeat
 the motor at XY is overheating
 
 X: side of robot 
@@ -12,13 +12,14 @@ Y: motor pos
     - Forward - 0 
     - Aft     - 1 
 
-### 0x10XY - data logging
-#### 0x1001 - sd card missing
+### 0b10XY - data logging
+#### 0b1001 - sd card missing
 plug in the sd card
 
-#### 0x1010 - Saved
+#### 0b1010 - Saved
 Log Saved
 
-### 0x0111 - Competition Setup
-use the brain's screen to pick
-NOT IPMLMENTED
+### 0b0111 - Competition Setup
+use the brain's screen to pick atton
+
+## 0b0101 - Atton Done

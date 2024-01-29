@@ -11,7 +11,7 @@ A_SIDE =1
 
 # Brain should be defined by default
 brain=Brain()
-brain_inertial = Inertial(Ports.PORT1)
+inertial = Inertial(Ports.PORT1)
 
 
 # Robot connections
@@ -30,10 +30,10 @@ motor_2_motor_b = Motor(Ports.PORT12, GearSetting.RATIO_18_1, False)
 motor_drivetrain_right = MotorGroup(motor_2_motor_a, motor_2_motor_b)
 
 DRVmotors = {
-    0x10 :motor_1_motor_a,
-    0x11 :motor_1_motor_b,
-    0x00 :motor_2_motor_a,
-    0x01 :motor_2_motor_b
+    0b10 :motor_1_motor_a,
+    0b11 :motor_1_motor_b,
+    0b00 :motor_2_motor_a,
+    0b01 :motor_2_motor_b
 }
 
 motor_puncher = Motor(Ports.PORT15,GearSetting.RATIO_18_1,True)
@@ -44,7 +44,7 @@ led_tlem_r_2 = Led(brain.three_wire_port.b)
 led_tlem_y_1 = Led(brain.three_wire_port.c)
 led_tlem_y_2 = Led(brain.three_wire_port.d)
 
-brain_inertial.calibrate()
+inertial.calibrate()
 
 # wait for rotation sensor to fully initialize
 wait(30, MSEC)
@@ -76,12 +76,22 @@ class Logger:
         self.items = items
         self.keys = keys
         self.id = 0
+        
         self.reset()
+
+    def log(self,t):
+        timestamp = str(brain.timer.value())
+        T = ("{:<7} {}\n").format(
+            str(timestamp),
+            t)
+        self.logData += T
+        print(T,end="")
     def reset(self):
         """resets logs
         """        
         self.lastPoi = -1
         self.data = "time,"
+        self.logData = ""
         self.line(self.keys)
         
     def line(self,items,time=0):
@@ -114,7 +124,10 @@ class Logger:
         if brain.sdcard.savefile("matchData%s.csv" % (self.id),bytearray(self.data,'utf-8')) == 0:
             brain.screen.print('Save Faled')
         else:
-            brain.screen.print('Saved')
+            print('save')
+        if brain.sdcard.savefile("log%s.log" % (self.id),bytearray(self.logData,'utf-8')) == 0:
+            brain.screen.print('Save Faled')
+        else:
             print('save')
         self.reset()
         self.id +=1
@@ -129,9 +142,9 @@ def RDRPM():
     return drive_TO_ms(motor_drivetrain_right.velocity())
 
 log = Logger({
-    "X":DataPoint(brain_inertial.acceleration,XAXIS),
-    "Y":DataPoint(brain_inertial.acceleration,YAXIS),
-    "Z":DataPoint(brain_inertial.acceleration,ZAXIS),
+    "X":DataPoint(inertial.acceleration,XAXIS),
+    "Y":DataPoint(inertial.acceleration,YAXIS),
+    "Z":DataPoint(inertial.acceleration,ZAXIS),
 
     "L Drive M/S":DataPoint(LDRPM),
     "R Drive M/S":DataPoint(RDRPM),
@@ -246,6 +259,7 @@ ui = UI()
 def SEL_ATTON(sd):
     def w():
         global A_SIDE
+        log.log("ATTON: Selected "+str(sd))
         A_SIDE = sd
         ui.EN = False
         brain.screen.clear_screen()
@@ -586,11 +600,13 @@ class speedControlls:
             "print":print
         }
         if brain.sdcard.is_inserted() :
+            log.log("ATTON: SD CARD")
             a = bytes(brain.sdcard.loadfile("atton.py")).decode('ascii')
             print(str(a))
             exec(str(a),glbls)
             self.Adrive(0,0)
         else:
+            log.log("ATTON: Backup")
             self.Adrive(90,0)
             wait(2000)
             #log()
@@ -606,18 +622,22 @@ class speedControlls:
             #self.Adrive(10,0)
             #wait(100)
             #self.stop()
-        pass
+        log.log("ATTON: DONE")
+        anunciator.code(0b0101)
         
 
 speed = speedControlls(driver_pilot_max_speed)
 
 def autonomous_start():
+    log.log("COMP: atton")
     state.mode = modes.ap
     init()
     speed.driveSequence()
     state.mode = modes.mode1
 
 def driver():
+    log.log("COMP: driver")
+    anunciator.code(0b0000)
     init()
     state.mode = modes.mode1
 
@@ -667,7 +687,7 @@ def init():
     global INITD
     log()
     if not INITD and competition.is_enabled():
-        
+        log.log("INIT: started")
         INITD = True
         anunciator.tgl('R')
 
@@ -678,14 +698,17 @@ def init():
             pass
         else:
             anunciator.code(0b1001)
+            log.log("FS: No SD Card")
             anunciator.tgl("S")
-            sleep(2,SECONDS)
-            anunciator.codeRestore()    
+            sleep(1,SECONDS)
         anunciator.code(0b0000)
+
+def collision():
+    log.log("inertial: collision")
 
 competition=Competition(driver,autonomous_start)
 init()
-#brain_inertial.collision()
+inertial.collision(collision)
 
 #region Arcade
 #controller_1.axis3.changed(speed.mspeed)
@@ -694,6 +717,8 @@ init()
 #endregion
 
 ui.draw()
+
+
 
 brain.screen.pressed(ui.click)
 
