@@ -1,25 +1,50 @@
 #Code By Ben H
 #region Robot Configuration
 from vex import *
-import urandom
+import urandom,math
+
+MOTOR_OVERHEAT = 40
+
+
+A_SIDE =1
+
 
 # Brain should be defined by default
 brain=Brain()
-brain_inertial = Inertial(Ports.PORT1)
+inertial = Inertial(Ports.PORT1)
 
 
 # Robot connections
+
+
+
+DRIVE_GEAR_RATIO = 5/9
+WHEEL_D = 0.104
+
 controller_1 = Controller(PRIMARY)
-motor_1_motor_a = Motor(Ports.PORT12, GearSetting.RATIO_18_1, False)
-motor_1_motor_b = Motor(Ports.PORT11, GearSetting.RATIO_18_1, False)
+motor_1_motor_a = Motor(Ports.PORT19, GearSetting.RATIO_18_1, True)
+motor_1_motor_b = Motor(Ports.PORT20, GearSetting.RATIO_18_1, True)
 motor_drivetrain_left = MotorGroup(motor_1_motor_a, motor_1_motor_b)
-motor_2_motor_a = Motor(Ports.PORT19, GearSetting.RATIO_18_1, True)
-motor_2_motor_b = Motor(Ports.PORT20, GearSetting.RATIO_18_1, True)
+motor_2_motor_a = Motor(Ports.PORT11, GearSetting.RATIO_18_1, False)
+motor_2_motor_b = Motor(Ports.PORT12, GearSetting.RATIO_18_1, False)
 motor_drivetrain_right = MotorGroup(motor_2_motor_a, motor_2_motor_b)
 
-motor_puncher = Motor(Ports.PORT15,GearSetting.RATIO_18_1)
+DRVmotors = {
+    0b10 :motor_1_motor_a,
+    0b11 :motor_1_motor_b,
+    0b00 :motor_2_motor_a,
+    0b01 :motor_2_motor_b
+}
 
-brain_inertial.calibrate()
+motor_puncher = Motor(Ports.PORT15,GearSetting.RATIO_18_1,True)
+
+led_tlem_r_1 = Led(brain.three_wire_port.a)
+led_tlem_r_2 = Led(brain.three_wire_port.b)
+
+led_tlem_y_1 = Led(brain.three_wire_port.c)
+led_tlem_y_2 = Led(brain.three_wire_port.d)
+
+inertial.calibrate()
 
 # wait for rotation sensor to fully initialize
 wait(30, MSEC)
@@ -28,7 +53,7 @@ wait(30, MSEC)
 #endregion Robot Configuration
 autopilot = False
 
-def NoFunc(*args, **kwargs):
+def NoFunc():
     print('NF')
     pass
 
@@ -52,12 +77,22 @@ class Logger:
         self.items = items
         self.keys = keys
         self.id = 0
+        
         self.reset()
+
+    def log(self,t):
+        timestamp = str(brain.timer.value())
+        T = ("{:<7} {}\n").format(
+            str(timestamp),
+            t)
+        self.logData += T
+        print(T,end="")
     def reset(self):
         """resets logs
         """        
         self.lastPoi = -1
         self.data = "time,"
+        self.logData = ""
         self.line(self.keys)
         
     def line(self,items,time=0):
@@ -71,7 +106,8 @@ class Logger:
         for i in items:
             line += str(i) + ","
         self.data += line[0:-1] + "\n"
-        if len(self.data) > 5000:
+        if len(self.data) > 50000:
+            print('saver')
             self.save()
 
     def __call__(self):
@@ -89,84 +125,205 @@ class Logger:
         if brain.sdcard.savefile("matchData%s.csv" % (self.id),bytearray(self.data,'utf-8')) == 0:
             brain.screen.print('Save Faled')
         else:
-            brain.screen.print('Saved')
+            print('save')
+        if brain.sdcard.savefile("log%s.log" % (self.id),bytearray(self.logData,'utf-8')) == 0:
+            brain.screen.print('Save Faled')
+        else:
+            print('save')
         self.reset()
         self.id +=1
 
+def drive_TO_ms(rpm):
+    return ((rpm * (DRIVE_GEAR_RATIO))* math.pi * WHEEL_D)/60
+
+def LDRPM():
+    return drive_TO_ms(motor_drivetrain_left.velocity())
+
+def RDRPM():
+    return drive_TO_ms(motor_drivetrain_right.velocity())
+
 log = Logger({
-    "X":DataPoint(brain_inertial.acceleration,XAXIS),
-    "Y":DataPoint(brain_inertial.acceleration,YAXIS),
-    "Z":DataPoint(brain_inertial.acceleration,ZAXIS),
+    "X":DataPoint(inertial.acceleration,XAXIS),
+    "Y":DataPoint(inertial.acceleration,YAXIS),
+    "Z":DataPoint(inertial.acceleration,ZAXIS),
+
+    "L Drive M/S":DataPoint(LDRPM),
+    "R Drive M/S":DataPoint(RDRPM),
 
     "DFL Temp": DataPoint(motor_1_motor_a.temperature),
-    "DFL Current": DataPoint(motor_1_motor_a.current),
     "DFL Torque": DataPoint(motor_1_motor_a.torque),
     "DFL Velocity": DataPoint(motor_1_motor_a.velocity),
 
     "DAL Temp": DataPoint(motor_1_motor_b.temperature),
-    "DAL Current": DataPoint(motor_1_motor_b.current),
     "DAL Torque": DataPoint(motor_1_motor_b.torque),
     "DAL Velocity": DataPoint(motor_1_motor_b.velocity),
 
     "DFR Temp": DataPoint(motor_2_motor_a.temperature),
-    "DFR Current": DataPoint(motor_2_motor_a.current),
     "DFR Torque": DataPoint(motor_2_motor_a.torque),
     "DFR Velocity": DataPoint(motor_2_motor_a.velocity),
 
     "DAR Temp": DataPoint(motor_2_motor_b.temperature),
-    "DAR Current": DataPoint(motor_2_motor_b.current),
     "DAR Torque": DataPoint(motor_2_motor_b.torque),
     "DAR Velocity": DataPoint(motor_2_motor_b.velocity),
     
-    "Pchr Temp": DataPoint(motor_puncher.temperature),
-    "Pchr Velocity": DataPoint(motor_puncher.velocity)
+    "PCHR Temp": DataPoint(motor_puncher.temperature),
+    "PCHR Velocity": DataPoint(motor_puncher.velocity),
 
 },[
     "X",
     "Y",
     "Z",
 
+    "L Drive M/S",
+    "R Drive M/S",
+
     "DFL Temp",
-    "DFL Current",
     "DFL Torque",
     "DFL Velocity",
 
     "DAL Temp",
-    "DAL Current",
     "DAL Torque",
     "DAL Velocity",
 
     "DFR Temp",
-    "DFR Current",
     "DFR Torque",
     "DFR Velocity",
 
     "DAR Temp",
-    "DAR Current",
     "DAR Torque",
     "DAR Velocity",
 
-    "Pchr Temp",
-    "Pchr Velocity",
+    "PCHR Temp",
+    "PCHR Velocity",
 ])
+
+class Elem:
+    def __init__(self,x,y,t) -> None:
+        self.x = x
+        self.y = y
+        self.t = t
+    def draw(self):
+        brain.screen.set_cursor(self.x,self.y)
+        brain.screen.print(self.t)
+    def click(self,x,y):
+        pass
+
+class Button(Elem):
+    def __init__(self, x, y,w,h,c, t,cb) -> None:
+        super().__init__(x, y, t)
+        self.w = w
+        self.h = h
+        self.cb = cb
+        self.c = c
+    def draw(self):
+        brain.screen.set_pen_color(Color.WHITE)
+        brain.screen.draw_rectangle((self.x-1)*10,(self.y+1)*20,self.w*10,self.h*20,self.c)
+        brain.screen.print_at(self.t,x=(self.x-1)*10,y=(self.y+1.75)*20,opaque=False)
+    def click(self, x, y):
+        if (x>= (self.x-1)*10 and y >= (self.y+1)*20):
+            print("|",(self.w*10)-x,(self.h*20)-y)
+            #brain.screen.draw_line(x,0,x,240)
+            #brain.screen.draw_line(0,y,480,y)
+            if (x<= (self.w+self.x)*10 and y <= (self.h+self.y)*20):
+                print("/")
+                self.cb()
+
+class Rect(Elem):
+    def __init__(self, x, y,w,h,c) -> None:
+        super().__init__(x, y, "")
+        self.w = w
+        self.h = h
+        self.c = c
+    def draw(self):
+        brain.screen.set_pen_color(self.c)
+        brain.screen.draw_rectangle((self.x-1)*10,(self.y+1)*20,self.w*10,self.h*20,Color.TRANSPARENT)
+    
+class UI:
+    def __init__(self) -> None:
+        self.e = []
+        self.EN = True
+    def add(self,e):
+        self.e.append(e)
+    def draw(self):
+        brain.screen.clear_screen()
+        for i in self.e:
+            i.draw()
+    def click(self):
+        if self.EN:
+            x,y = brain.screen.x_position(),brain.screen.y_position()
+            print(x,y)
+            for i in self.e:
+                i.click(x,y)
+            #self.draw()
+
+ui = UI()
+def SEL_ATTON(sd):
+    def w():
+        global A_SIDE
+        log.log("ATTON: Selected "+str(sd))
+        A_SIDE = sd
+        ui.EN = False
+        brain.screen.clear_screen()
+    return w
+
+            
+
+ui.add(Elem(1,1,"Robot Atton Sel"))
+
+ui.add(Rect(2.5,0.5,8,8,Color.RED))
+ui.add(Rect(11.5,0.5,8,8,Color.BLUE))
+
+ui.add(Button(3,1,7,3,Color.RED  ," DEFNC ",SEL_ATTON(-1)))
+
+ui.add(Button(3,5,7,3,Color.BLUE ," OFFNC ",SEL_ATTON(1)))
+
+ui.add(Button(12,1,7,3,Color.RED ," OFFNC ",SEL_ATTON(-1)))
+
+ui.add(Button(12,5,7,3,Color.BLUE," DEFNC ",SEL_ATTON(1)))
 
 class modes:
     stop = 0
     ap = 1
     mode1 = 2
     mode2 = 3
+    setup = 4
 
 class Anunciator:
+    status = {
+        "R":0,
+        "T":1,
+        "G":2,
+        "r":3,
+        'M':4,
+        'S':5
+    }
+    statz = ["R","T","G",'r','M',"S"]
     def __init__(self) -> None:
-        self.statz = ["R","T","G",'r','M',"S"]
-        self.status = dict(zip(self.statz,range(0,len(self.statz))))
-
-        self.stat = {i: False for i in self.statz}
-        i = 0
-        for I in self.statz:
+        self.stat = [False for i in self.statz]
+        self.LEDCODE = 0
+        self.Old_LEDCODE = 0
+        #i = 0
+        for I in (self.statz):
             #status[I] = i
             self.draw(I)
-            i += 1
+            #i += 0
+    def setLED(self,led:Led,b):
+        if b:
+            led.on()
+        else:
+            led.off()
+    def code(self,i):
+        self.Old_LEDCODE = self.LEDCODE # alows for restoring 
+        self.LEDCODE = i
+        self.setLED(led_tlem_r_1,bool(i & 8))# RED 
+        self.setLED(led_tlem_r_2,bool(i & 4))# RED
+        self.setLED(led_tlem_y_1,bool(i & 2))# Yellow
+        self.setLED(led_tlem_y_2,bool(i & 1))# Yellow
+    def codeRestore(self):
+        old = self.Old_LEDCODE
+        self.Old_LEDCODE = self.LEDCODE
+        self.LEDCODE = old
+        self.code(old)
     def draw(self,c):
         """draws char to screen
 
@@ -174,7 +331,7 @@ class Anunciator:
             c (str): the charicter, must be registered to status and statz
         """
         controller_1.screen.set_cursor(1,self.status[c]+1)
-        if self.stat[c]:
+        if self.stat[self.status[c]]:
             controller_1.screen.print(c)
         else:
             controller_1.screen.print("-")
@@ -184,7 +341,7 @@ class Anunciator:
         Args:
             c (str): the charicter, must be registered to status and statz
         """
-        self.stat[c] = not self.stat[c]
+        self.stat[self.status[c]] = not self.stat[self.status[c]]
         self.draw(c)
     def disable(self,c):
         """disables char on screen
@@ -192,7 +349,7 @@ class Anunciator:
         Args:
             c (str): the charicter, must be registered to status and statz
         """
-        self.stat[c] = False
+        self.stat[self.status[c]] = False
         self.draw(c)
     def warn(self,c):
         """toggles char on screen and indicates a warn
@@ -201,7 +358,7 @@ class Anunciator:
             c (str): the charicter, must be registered to status and statz
         """
         self.tgl(c)
-        if self.stat[c]:
+        if self.stat[self.status[c]]:
             controller_1.rumble("...---...") # sos
         else:
             controller_1.rumble(".")
@@ -223,21 +380,26 @@ class Status_Warnings:
         return wrapper
     
     def temps(self,val):
-        """triggers a motor temp warning if val > 40
+        """triggers a motor temp warning if val > MOTOR_OVERHEAT
 
         Args:
             val (int): max motor temp
         """
         self.Temps = val
-        if val > 40:
+        if val > MOTOR_OVERHEAT and (not self.states['T']):
             self.states['T'] = True
             self.restrict = True
             anunciator.warn('T')
+            for i,m in DRVmotors.items():
+                if m.temperature() > MOTOR_OVERHEAT:
+                    anunciator.code(0b1100+i)
             controller_1.screen.set_cursor(2,1)
             controller_1.screen.print(val)
+            
 
         elif self.states['T']:
             self.states['T'] = False
+            anunciator.code(0b0000+i)
             anunciator.warn('T')
 
     def restrict_all(self,func):
@@ -271,6 +433,10 @@ btnz = {
 class State:
     def __init__(self) -> None:
         self.mode = modes.mode1
+        #if competition.is_competition_switch():
+            #self.mode = modes.setup
+            #controller_1.rumble("..")
+        #    pass
         self.errors = 0    
 
     def driverNeeded(self,func):
@@ -369,8 +535,9 @@ class speedControlls:
     @state.autopilotOnly
     def Adrive(self,speed,diff):
         self.speed = speed
-        self.diff = diff
+        self.diff = diff*A_SIDE
         self.calcMotors()
+        log()
     
     def stop(self):
         self.Adrive(0,0)
@@ -390,7 +557,6 @@ class speedControlls:
         status.temps(max(motor_1_motor_a.temperature(),motor_1_motor_b.temperature(),motor_2_motor_a.temperature(),motor_2_motor_b.temperature()))
     
     @state.driverNeeded
-    @sticks.Change(modes.mode1,3)
     def mspeed(self,mod=0.5):
         pos = controller_1.axis3.position()*mod
         brain.screen.print(str(self.speed_mult))
@@ -398,8 +564,12 @@ class speedControlls:
         self.calcMotors()
 
     @sticks.Change(modes.mode1,2)
-    def Mspeed(self):
+    def MSpeed(self):
         self.mspeed(1.0)
+
+    @sticks.Change(modes.mode1,3)
+    def Mspeed(self):
+        self.mspeed(0.5)
 
     @state.driverNeeded
     def dspeed(self,mod):
@@ -436,29 +606,50 @@ class speedControlls:
     def driveSequence(self):
         """Autopilot driveSequence
         """
-        self.Adrive(90,20)
-        wait(1200)
-        log()
-        self.Adrive(15,-100)
-        wait(100)
-        log()
-        self.Adrive(0,0)
-        #Arm()
-        #self.Adrive(10,0)
-        #wait(100)
-        #self.stop()
-        pass
+        glbls = {
+            "Adrive":self.Adrive,
+            "wait":wait,
+            "print":print
+        }
+        if brain.sdcard.is_inserted() :
+            log.log("ATTON: SD CARD")
+            a = bytes(brain.sdcard.loadfile("atton.py")).decode('ascii')
+            print(str(a))
+            exec(str(a),glbls)
+            self.Adrive(0,0)
+        else:
+            log.log("ATTON: Backup")
+            self.Adrive(90,0)
+            wait(2000)
+            #log()
+            print('D')
+            
+            self.Adrive(100,-100)
+            wait(1000)
+            #log()
+            print('S')
+            
+            self.Adrive(0,0)
+            #Arm()
+            #self.Adrive(10,0)
+            #wait(100)
+            #self.stop()
+        log.log("ATTON: DONE")
+        anunciator.code(0b0101)
         
 
 speed = speedControlls(driver_pilot_max_speed)
 
 def autonomous_start():
+    log.log("COMP: atton")
     state.mode = modes.ap
     init()
     speed.driveSequence()
     state.mode = modes.mode1
 
 def driver():
+    log.log("COMP: driver")
+    anunciator.code(0b0000)
     init()
     state.mode = modes.mode1
 
@@ -495,7 +686,10 @@ def release():
 save = ButtonBinding('b',modes.mode1)
 @save.Press
 def press():
+    anunciator.code(0b1010)
     log.save()
+    sleep(2,SECONDS)
+    anunciator.codeRestore()
 
 #endregion
 
@@ -505,6 +699,7 @@ def init():
     global INITD
     log()
     if not INITD and competition.is_enabled():
+        log.log("INIT: started")
         INITD = True
         anunciator.tgl('R')
 
@@ -514,11 +709,18 @@ def init():
         if brain.sdcard.is_inserted():
             pass
         else:
-            anunciator.tgl("S")    
+            anunciator.code(0b1001)
+            log.log("FS: No SD Card")
+            anunciator.tgl("S")
+            sleep(1,SECONDS)
+        anunciator.code(0b0000)
+
+def collision():
+    log.log("inertial: collision")
 
 competition=Competition(driver,autonomous_start)
 init()
-#brain_inertial.collision()
+inertial.collision(collision)
 
 #region Arcade
 #controller_1.axis3.changed(speed.mspeed)
@@ -526,6 +728,20 @@ init()
 #speed.calcMotors()
 #endregion
 
+ui.draw()
+
+
+
+brain.screen.pressed(ui.click)
+
+ui.draw()
+
+
+
+brain.screen.pressed(ui.click)
+
+controller_1.axis3.changed(speed.drive)
+controller_1.axis2.changed(speed.drive)
 
 
 motor_drivetrain_left.spin(FORWARD)
