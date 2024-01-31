@@ -23,3 +23,4 @@ Log Saved
 use the brain's screen to pick atton
 
 ## 0b0101 - Atton Done
+## 0b0110 - Atton ERROR
