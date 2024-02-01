@@ -2,7 +2,7 @@
 #region Robot Configuration
 from vex import *
 import urandom,math
-CODE_VER = b'1fe3085\n'
+CODE_VER = b'5173948\n'
 MOTOR_OVERHEAT = 40
 
 
@@ -703,6 +703,7 @@ def init():
     log()
     if not INITD and competition.is_enabled():
         log.log("INIT: started")
+        log.log("INIT: running code ver: "+CODE_VER)
         INITD = True
         anunciator.tgl('R')
 

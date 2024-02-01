@@ -1,5 +1,8 @@
-# Debuging and Testing
+# Uploading code
 
+ctrl + shift + p  -> Tasks: Run Task
+
+# Debuging and Testing
 
 ## Error Codes
 ### 0b11XY - Motor OverHeat

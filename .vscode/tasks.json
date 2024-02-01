@@ -1,0 +1,22 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build",
+            "type": "shell",
+            "command": "Invoke-Expression (Join-Path -Path ($env:LOCALAPPDATA) -ChildPath '\\Programs\\Python\\Python312\\python.exe build.py')"
+        },
+        {
+            "label": "upload",
+            "dependsOn": [
+                "build"
+            ],
+            "command": [
+                "${command:vexrobotics.vexcode.system.download}"
+            ],
+            "problemMatcher": []
+        }
+    ]
+}
