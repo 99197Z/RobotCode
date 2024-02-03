@@ -269,7 +269,10 @@ def SEL_ATTON(sd):
         DMui.draw()
     return w
 
-            
+mtrx = [
+    [1,-1],
+    [1,-1]
+]    
 
 ui.add(Elem(1,1,"Robot Atton Sel"))
 
@@ -280,9 +283,9 @@ ui.add(Button(3,1,7,3,Color.RED  ," DEFNC ",SEL_ATTON(-1)))
 
 ui.add(Button(3,5,7,3,Color.BLUE ," OFFNC ",SEL_ATTON(-1)))
 
-ui.add(Button(12,1,7,3,Color.RED ," OFFNC ",SEL_ATTON(1)))
+ui.add(Button(12,1,7,3,Color.RED  ," OFFNC ",SEL_ATTON(1)))
 
-ui.add(Button(12,5,7,3,Color.BLUE," DEFNC ",SEL_ATTON(1)))
+ui.add(Button(12,5,7,3,Color.BLUE ," DEFNC ",SEL_ATTON(1)))
 
 
 class modes:
@@ -425,7 +428,7 @@ class Status_Warnings:
 
         elif self.states['T']:
             self.states['T'] = False
-            anunciator.code(0b0000+i)
+            anunciator.code(0b0000)
             anunciator.warn('T')
 
     def restrict_all(self,func):
@@ -617,7 +620,7 @@ class speedControlls:
             else:
                 log.log("ATTON: Backup\n\tRunning non-SD card code")
                 self.Adrive(90,0)
-                wait(2000)
+                wait(1500)
 
                 
                 self.Adrive(100,-100)
