@@ -608,7 +608,6 @@ class speedControlls:
             "wait":wait,
             "print":print,
             "ATONdrive":self.ATONdrive
-
         }
         try:
             if brain.sdcard.is_inserted() and brain.sdcard.exists('atton.py') :
@@ -619,8 +618,8 @@ class speedControlls:
                 self.Adrive(0,0)
             else:
                 log.log("ATTON: Backup\n\tRunning non-SD card code")
-                self.Adrive(90,0)
-                wait(1500)
+                self.Adrive(100,0)
+                wait(1400)
 
                 
                 self.Adrive(100,-100)
@@ -716,10 +715,8 @@ def init():
         if brain.sdcard.is_inserted():
             pass
         else:
-            anunciator.code(0b1001)
             log.log("FS: No SD Card")
             anunciator.tgl("S")
-            sleep(1,SECONDS)
         anunciator.code(0b0000)
 
 def collision():

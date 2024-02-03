@@ -38,6 +38,19 @@ glbls = {
             "print":print
         }
 
+turtle.penup()
+turtle.goto(-75,-200)
+turtle.pendown()
+turtle.left(90)
+
+turtle.forward(400)
+
+turtle.penup()
+turtle.goto(200,0)
+turtle.pendown()
+turtle.left(90)
+turtle.forward(500)
+
 with open("atton.py","r") as f:
     turtle.pencolor(1,0,0)
     tx = f.read()

@@ -1,5 +1,5 @@
-Adrive(90,0)
-wait(2000)
+Adrive(100,0)
+wait(1300)
 
 
 Adrive(100,-100)
