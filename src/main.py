@@ -91,14 +91,18 @@ class Logger:
         self.id = 0
         
         self.reset()
-
-    def log(self,t):
+    def log(self,t,l):
         timestamp = str(brain.timer.value())
-        T = ("{:<7} {}\n").format(
+        T = ("{:<7} - [{:<7}] {}\n").format(
+            l,
             str(timestamp),
             t)
         self.logData += T
         print(T,end="")
+    def debug(self,t):
+        self.log(t,"debug")
+    def WARNING(self,t):
+        self.log(t,"debug")
     def reset(self):
         """resets logs
         """        
@@ -268,7 +272,7 @@ ui = UI()
 def SEL_ATTON(sd):
     def w():
         global A_SIDE
-        log.log("ATTON: Selected "+str(sd))
+        log.debug("ATTON: Selected "+str(sd))
         A_SIDE = sd
         ui.EN = False
         state.preSETUP = False
@@ -306,7 +310,7 @@ DMui = UI()
 def dmode(m):
     def w():
         if state.dm != m:
-            log.log("DM: "+str(m))
+            log.debug("DM: "+str(m)+" - mode switched")
             state.dm = m
             controller_1.rumble('.')
             anunciator.tgl('M')
@@ -394,6 +398,7 @@ class Anunciator:
         self.tgl(c)
         if self.stat[self.status[c]]:
             controller_1.rumble("...---...") # sos
+            log.WARNING("ANUNC: WARNING")
         else:
             controller_1.rumble(".")
         
@@ -428,7 +433,7 @@ class Status_Warnings:
                 temp = m.temperature()
                 if temp > MOTOR_OVERHEAT:
                     anunciator.code(0b1100+i)
-                    log.log("MOTOR "+DRVmotorsNAME[i]+": OVERHEAT - "+str(temp))
+                    log.debug("MOTOR "+DRVmotorsNAME[i]+": OVERHEAT - "+str(temp))
             controller_1.screen.set_cursor(2,1)
             controller_1.screen.print(val)
             
@@ -618,13 +623,13 @@ class speedControlls:
         }
         try:
             if brain.sdcard.is_inserted() and brain.sdcard.exists('atton.py') :
-                log.log("ATTON: SD CARD")
+                log.debug("ATTON: SD CARD")
                 a = bytes(brain.sdcard.loadfile("atton.py")).decode('ascii')
                 print(str(a))
                 exec(str(a),glbls)
                 self.Adrive(0,0)
             else:
-                log.log("ATTON: Backup\n\tRunning non-SD card code")
+                log.debug("ATTON: Backup\n\tRunning non-SD card code")
                 self.Adrive(100,0)
                 wait(1300)
 
@@ -637,10 +642,10 @@ class speedControlls:
                 #self.Adrive(10,0)
                 #wait(100)
                 #self.stop()
-            log.log("ATTON: DONE")
+            log.debug("ATTON: DONE")
             anunciator.code(0b0101)
         except BaseException as e:
-            log.log("ATTON: ERROR - "+str(e))
+            log.WARNING("ATTON: ERROR - "+str(e))
             anunciator.code(0b0110)
             self.Adrive(0,0)
         
@@ -648,14 +653,14 @@ class speedControlls:
 speed = speedControlls(driver_pilot_max_speed)
 
 def autonomous_start():
-    log.log("COMP: atton")
+    log.debug("COMP: atton")
     state.mode = modes.ap
     init()
     speed.driveSequence()
     state.mode = modes.mode1
 
 def driver():
-    log.log("COMP: driver")
+    log.debug("COMP: driver")
     anunciator.code(0b0000)
     
     init()
@@ -711,8 +716,8 @@ def init():
     global INITD
     log()
     if not INITD and competition.is_enabled():
-        log.log("INIT: started")
-        log.log("INIT: running code ver: "+CODE_VER)
+        log.debug("INIT: started")
+        log.debug("INIT: running code ver: "+CODE_VER)
         INITD = True
         anunciator.tgl('R')
 
@@ -722,12 +727,12 @@ def init():
         if brain.sdcard.is_inserted():
             pass
         else:
-            log.log("FS: No SD Card")
+            log.WARNING("FS: No SD Card")
             anunciator.tgl("S")
         anunciator.code(0b0000)
 
 def collision():
-    log.log("inertial: collision")
+    log.debug("inertial: collision")
 
 competition=Competition(driver,autonomous_start)
 init()
