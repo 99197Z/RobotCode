@@ -6,6 +6,7 @@ d=0
 T=0
 mod=1
 Mod=-1
+over = False
 mtrx = [
     [1,-1],
     [1,-1]
@@ -32,6 +33,13 @@ def goto(x,y):
     turtle.pendown()
     turtle.right(turtle.heading())
     turtle.left(90)
+
+def check(X,Y):
+    global over
+    x,y = turtle.pos()
+    if X == 1:
+        pass
+
 glbls = {
             "Adrive":Adrive,
             "wait":sleep,
