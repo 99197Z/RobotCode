@@ -312,13 +312,14 @@ DMui = UI()
 
 def dmode(m):
     def w():
-        if state.dm != m:
-            log.debug("DM: "+str(m)+" - mode switched")
-            state.dm = m
-            controller_1.rumble('.')
-            anunciator.tgl('M')
-            if state.mode != modes.ap:
-                state.mode = m
+        log.debug('dmode: disabled')
+        #if state.dm != m:
+        #    log.debug("DM: "+str(m)+" - mode switched")
+        #    state.dm = m
+        #    controller_1.rumble('.')
+        #    anunciator.tgl('M')
+        #    if state.mode != modes.ap:
+        #        state.mode = m
     return w
 
 
