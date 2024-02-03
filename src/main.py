@@ -11,6 +11,15 @@ A_SIDE =1
 
 # Brain should be defined by default
 brain=Brain()
+ba = bytearray(b'\x00')
+brain.sdcard.loadfile("mat.ch",ba)
+m = ba[0]
+if m:
+    mtch = m+1
+else:
+    mtch = 1
+brain.sdcard.savefile("mat.ch",str(mtch))
+
 inertial = Inertial(Ports.PORT1)
 
 
