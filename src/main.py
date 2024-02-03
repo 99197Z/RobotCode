@@ -104,7 +104,7 @@ class Logger:
     def debug(self,t):
         self.log(t,"debug")
     def WARNING(self,t):
-        self.log(t,"debug")
+        self.log(t,"warn")
     def reset(self):
         """resets logs
         """        
@@ -140,12 +140,14 @@ class Logger:
     def save(self):
         """saves logs then resets
         """
-        if brain.sdcard.savefile("matchData%s.csv" % (self.id),bytearray(self.data,'utf-8')) == 0:
+        if brain.sdcard.savefile("matchData%s-%s.csv" % (mtch,self.id),bytearray(self.data,'utf-8')) == 0:
             brain.screen.print('Save Faled')
+            self.WARNING("fs: save failed matchData")
         else:
             print('save')
-        if brain.sdcard.savefile("log%s.log" % (self.id),bytearray(self.logData,'utf-8')) == 0:
+        if brain.sdcard.savefile("log%s-%s.log" % (mtch,self.id),bytearray(self.logData,'utf-8')) == 0:
             brain.screen.print('Save Faled')
+            self.WARNING("fs: save failed log")
         else:
             print('save')
         self.reset()
@@ -292,11 +294,11 @@ ui.add(Elem(1,1,"Robot Atton Sel"))
 ui.add(Rect(2.5,0.5,8,8,Color.RED))
 ui.add(Rect(11.5,0.5,8,8,Color.BLUE))
 
-ui.add(Button(3,1,7,3,Color.RED  ," DEFNC ",SEL_ATTON(-1)))
+ui.add(Button(3,1,7,3,Color.RED  ," DEFNC ",SEL_ATTON(1)))
 
 ui.add(Button(3,5,7,3,Color.BLUE ," OFFNC ",SEL_ATTON(-1)))
 
-ui.add(Button(12,1,7,3,Color.RED  ," OFFNC ",SEL_ATTON(1)))
+ui.add(Button(12,1,7,3,Color.RED  ," OFFNC ",SEL_ATTON(-1)))
 
 ui.add(Button(12,5,7,3,Color.BLUE ," DEFNC ",SEL_ATTON(1)))
 
@@ -355,6 +357,7 @@ class Anunciator:
     def code(self,i):
         self.Old_LEDCODE = self.LEDCODE # alows for restoring 
         self.LEDCODE = i
+        log.debug('anunc: led 0b'+bin(i))
         self.setLED(led_tlem_r_1,bool(i & 8))# RED 
         self.setLED(led_tlem_r_2,bool(i & 4))# RED
         self.setLED(led_tlem_y_1,bool(i & 2))# Yellow
