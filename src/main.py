@@ -723,6 +723,7 @@ def init():
     if not INITD and competition.is_enabled():
         log.debug("INIT: started")
         log.debug("INIT: running code ver: "+CODE_VER)
+        log.debug("INIT: MATCH "+str(mtch))
         INITD = True
         anunciator.tgl('R')
 
