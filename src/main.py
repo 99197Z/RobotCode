@@ -11,13 +11,14 @@ A_SIDE =1
 
 # Brain should be defined by default
 brain=Brain()
-m = brain.sdcard.load_to_string("mat.ch")
-if m:
-    mtch = int(m)+1
-    
-else:
-    mtch = 1
-brain.sdcard.savefile("mat.ch",str(mtch))
+#m = brain.sdcard.load_to_string("mat.ch")
+#if m:
+#    mtch = int(m)+1
+#    
+#else:
+#    mtch = 1
+#brain.sdcard.savefile("mat.ch",str(mtch))
+mtch = 1
 inertial = Inertial(Ports.PORT1)
 
 
@@ -102,7 +103,7 @@ class Logger:
     def debug(self,t):
         self.log(t,"debug")
     def WARNING(self,t):
-        self.log(t,"debug")
+        self.log(t,"warn")
     def reset(self):
         """resets logs
         """        
@@ -140,10 +141,12 @@ class Logger:
         """
         if brain.sdcard.savefile("matchData%s-%s.csv" % (mtch,self.id),bytearray(self.data,'utf-8')) == 0:
             brain.screen.print('Save Faled')
+            self.WARNING("fs: save failed matchData")
         else:
             print('save')
         if brain.sdcard.savefile("log%s-%s.log" % (mtch,self.id),bytearray(self.logData,'utf-8')) == 0:
             brain.screen.print('Save Faled')
+            self.WARNING("fs: save failed log")
         else:
             print('save')
         self.reset()
@@ -353,6 +356,7 @@ class Anunciator:
     def code(self,i):
         self.Old_LEDCODE = self.LEDCODE # alows for restoring 
         self.LEDCODE = i
+        log.debug('anunc: led 0b'+bin(i))
         self.setLED(led_tlem_r_1,bool(i & 8))# RED 
         self.setLED(led_tlem_r_2,bool(i & 4))# RED
         self.setLED(led_tlem_y_1,bool(i & 2))# Yellow
