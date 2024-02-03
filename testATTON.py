@@ -57,11 +57,14 @@ with open("atton.py","r") as f:
     goto(0,1)
     mod=mtrx[1][0]
     exec(tx,glbls)
+    turtle.dot(5)
+    
     mod=mtrx[1][1]
     m=0
     d=0
     goto(-1,1)
     exec(tx,glbls)
+    turtle.dot(5)
 
     Mod=1
     mod=mtrx[0][0]
@@ -69,11 +72,14 @@ with open("atton.py","r") as f:
 
     goto(0,-1)
     exec(tx,glbls)
+    turtle.dot(5)
+
     mod=mtrx[0][-1]
     m=0
     d=0
     goto(-1,-1)
     exec(tx,glbls)
+    turtle.dot(5)
 input()
 
 

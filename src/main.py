@@ -641,6 +641,9 @@ class speedControlls:
                 self.Adrive(100,-100)
                 wait(1000)
                 
+                self.Adrive(-100,0)
+                wait(1000)
+                
                 self.Adrive(0,0)
                 #Arm()
                 #self.Adrive(10,0)
