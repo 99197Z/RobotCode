@@ -301,12 +301,11 @@ ui.add(Button(12,1,7,3,Color.RED  ," OFFNC ",SEL_ATTON(-1)))
 
 ui.add(Button(12,5,7,3,Color.BLUE ," DEFNC ",SEL_ATTON(1)))
 
-
 class modes:
     stop = 0
     ap = 1
-    mode1 = 2
-    mode2 = 3
+    mode1 = 2 #tank
+    mode2 = 3 #arcade
 
 DMui = UI()
 
