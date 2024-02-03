@@ -1,7 +1,7 @@
 #Code By Ben H
 #region Robot Configuration
 from vex import *
-import urandom,math
+import math
 CODE_VER = "DEV"
 MOTOR_OVERHEAT = 40
 
