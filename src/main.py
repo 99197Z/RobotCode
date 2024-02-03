@@ -11,6 +11,13 @@ A_SIDE =1
 
 # Brain should be defined by default
 brain=Brain()
+m = brain.sdcard.load_to_string("mat.ch")
+if m:
+    mtch = int(m)+1
+    
+else:
+    mtch = 1
+brain.sdcard.savefile("mat.ch",str(mtch))
 inertial = Inertial(Ports.PORT1)
 
 
@@ -127,11 +134,11 @@ class Logger:
     def save(self):
         """saves logs then resets
         """
-        if brain.sdcard.savefile("matchData%s.csv" % (self.id),bytearray(self.data,'utf-8')) == 0:
+        if brain.sdcard.savefile("matchData%s-%s.csv" % (mtch,self.id),bytearray(self.data,'utf-8')) == 0:
             brain.screen.print('Save Faled')
         else:
             print('save')
-        if brain.sdcard.savefile("log%s.log" % (self.id),bytearray(self.logData,'utf-8')) == 0:
+        if brain.sdcard.savefile("log%s-%s.log" % (mtch,self.id),bytearray(self.logData,'utf-8')) == 0:
             brain.screen.print('Save Faled')
         else:
             print('save')
