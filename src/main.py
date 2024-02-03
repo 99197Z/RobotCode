@@ -619,7 +619,7 @@ class speedControlls:
             else:
                 log.log("ATTON: Backup\n\tRunning non-SD card code")
                 self.Adrive(100,0)
-                wait(1400)
+                wait(1300)
 
                 
                 self.Adrive(100,-100)
