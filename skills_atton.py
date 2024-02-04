@@ -1,6 +1,7 @@
 #do atton code here!
-time = (60*1000)/(1500*2)
+time = int((60*1000)/((1500*2)+2000))+1
 for i in range(time):
+    wait(2000)
     Adrive(100,0)
     wait(1500)
     
