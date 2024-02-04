@@ -110,12 +110,12 @@ class Logger:
         self.logData = ""
         self.line(self.keys)
         
-    def line(self,items,time=0):
+    def line(self,items,time=0.0):
         """logs a line
 
         Args:
             items (list[DataPoint]): list of data points
-            time (int, optional): timestamp. Defaults to 0.
+            time (float, optional): timestamp. Defaults to 0.
         """
         line = ''
         for i in items:
@@ -283,6 +283,7 @@ def SEL_ATTON(sd):
 def skills():
     state.mode = modes.skill
     log.debug("COMP: skills")
+    wait(5)
     speed.skills_drive()
     
 
@@ -513,7 +514,7 @@ class ButtonBinding:
     def __init__(self,btn,mode) -> None:
         self.btn = btn
         self.mode = mode
-    def press(self,f:function):
+    def press(self,f):
         def mode():
             if state.mode == self.mode:
                 f()
@@ -702,7 +703,7 @@ def driver():
 modeSwitch = ButtonBinding("down",modes.mode1)
 
 @modeSwitch.Press
-def press():
+def press_ctrl_switch_arcade():
     if not competition.is_competition_switch():
         state.mode = modes.mode2
         state.dm = modes.mode2
@@ -712,7 +713,7 @@ def press():
 modeSwitch2 = ButtonBinding("down",modes.mode2)
 
 @modeSwitch2.Press
-def press():
+def press_ctrl_switch_tank():
     if not competition.is_competition_switch():
         state.mode = modes.mode1
         state.dm = modes.mode1
@@ -722,7 +723,7 @@ def press():
 puncher = ButtonBinding('R2',modes.mode1)
 
 @puncher.Press
-def press():
+def press_puncher():
     motor_puncher.set_velocity(200,RPM)
 
 @puncher.Release
