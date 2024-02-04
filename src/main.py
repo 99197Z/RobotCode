@@ -270,6 +270,15 @@ class UI:
             #self.draw()
 
 ui = UI()
+def drawInfoScreen():
+    if not state.preSETUP:
+        brain.screen.set_font(FontType.MONO60)
+        brain.screen.set_cursor(1,1)
+        brain.screen.print("99197Z")
+        brain.screen.set_cursor(2,1)
+        brain.screen.set_font(FontType.MONO15)
+        brain.screen.print("c-%s m-%s" % (CODE_VER,str(state.mode)))
+
 def SEL_ATTON(sd):
     def w():
         global A_SIDE
@@ -278,7 +287,11 @@ def SEL_ATTON(sd):
         ui.EN = False # type: ignore
         state.preSETUP = False
         brain.screen.clear_screen()
-        DMui.draw()
+        
+        #DMui.draw()
+        drawInfoScreen()
+        
+
     return w
 def skills():
     state.mode = modes.skill
@@ -292,7 +305,7 @@ mtrx = [
     [1,-1]
 ]    
 
-ui.add(Elem(1,1,"Robot Atton Sel"))
+ui.add(Elem(1,1,"Robot Atton Sel - 99197Z"))
 ui.add(Rect(2.5,0.5,8,8,Color.RED))
 ui.add(Rect(11.5,0.5,8,8,Color.BLUE))
 ui.add(Button(3,1,7,3,Color.RED  ," DEFNC ",SEL_ATTON(-1)))
@@ -692,8 +705,10 @@ def autonomous_start():
     log.debug("COMP: atton")
     state.mode = modes.ap
     init()
+    drawInfoScreen()
     speed.driveSequence()
     state.mode = modes.mode1
+    drawInfoScreen()
 
 def driver():
     log.debug("COMP: driver")
@@ -701,6 +716,7 @@ def driver():
     
     init()
     state.mode = state.dm
+    drawInfoScreen()
 
 #competition.autonomous = autonomous_start
 
