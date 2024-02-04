@@ -302,24 +302,24 @@ ui.add(Button(12,1,7,3,Color.RED  ," OFFNC ",SEL_ATTON(-1)))
 
 ui.add(Button(12,5,7,3,Color.BLUE ," DEFNC ",SEL_ATTON(1)))
 
-
 class modes:
     stop = 0
     ap = 1
-    mode1 = 2
-    mode2 = 3
+    mode1 = 2 #tank
+    mode2 = 3 #arcade
 
 DMui = UI()
 
 def dmode(m):
     def w():
-        if state.dm != m:
-            log.debug("DM: "+str(m)+" - mode switched")
-            state.dm = m
-            controller_1.rumble('.')
-            anunciator.tgl('M')
-            if state.mode != modes.ap:
-                state.mode = m
+        log.debug('dmode: disabled')
+        #if state.dm != m:
+        #    log.debug("DM: "+str(m)+" - mode switched")
+        #    state.dm = m
+        #    controller_1.rumble('.')
+        #    anunciator.tgl('M')
+        #    if state.mode != modes.ap:
+        #        state.mode = m
     return w
 
 
@@ -620,11 +620,14 @@ class speedControlls:
     def driveSequence(self):
         """Autopilot driveSequence
         """
+        def logn(t):
+            log.debug("atton: "+t)
         glbls = {
             "Adrive":self.Adrive,
             "wait":wait,
             "print":print,
-            "ATONdrive":self.ATONdrive
+            "ATONdrive":self.ATONdrive,
+            "log":logn
         }
         try:
             if brain.sdcard.is_inserted() and brain.sdcard.exists('atton.py') :
@@ -635,12 +638,8 @@ class speedControlls:
                 self.Adrive(0,0)
             else:
                 log.debug("ATTON: Backup\n\tRunning non-SD card code")
-                self.Adrive(100,0)
-                wait(1300)
-
-                
-                self.Adrive(100,-100)
-                wait(1000)
+                a = '' #atton
+                exec(str(a),glbls)
                 
                 self.Adrive(0,0)
                 #Arm()
