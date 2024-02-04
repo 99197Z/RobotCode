@@ -6,7 +6,7 @@
         {
             "label": "build",
             "type": "shell",
-            "command": "Invoke-Expression (Join-Path -Path ($env:LOCALAPPDATA) -ChildPath '\\Programs\\Python\\Python312\\python.exe build.py')"
+            "command": "Invoke-Expression ('py build.py')"
         },
         {
             "label": "upload",
