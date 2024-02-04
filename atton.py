@@ -1,9 +1,9 @@
-Adrive(90,0)
-wait(2000)
-#log()
-print('D')
+#do atton code here!
 
-Adrive(100,-100)
-wait(1000)
-#log()
-print('S')
+Adrive(100,0)
+wait(1500)
+log('IN')
+
+Adrive(-100,0)
+wait(1500)
+log('OUT')

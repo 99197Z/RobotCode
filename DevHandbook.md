@@ -1,5 +1,8 @@
-# Debuging and Testing
+# Uploading code
 
+ctrl + shift + p  -> Tasks: Run Task
+
+# Debuging and Testing
 
 ## Error Codes
 ### 0b11XY - Motor OverHeat
@@ -23,3 +26,4 @@ Log Saved
 use the brain's screen to pick atton
 
 ## 0b0101 - Atton Done
+## 0b0110 - Atton ERROR
