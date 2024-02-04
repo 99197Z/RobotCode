@@ -5,9 +5,7 @@ import math
 CODE_VER = "DEV"
 MOTOR_OVERHEAT = 40
 
-
 A_SIDE =1
-
 
 # Brain should be defined by default
 brain=Brain()
@@ -304,7 +302,7 @@ ui.add(Button(12,5,7,3,Color.BLUE ," DEFNC ",SEL_ATTON(1)))
 
 class modes:
     stop = 0
-    ap = 1
+    ap = 1    #atton
     mode1 = 2 #tank
     mode2 = 3 #arcade
 
@@ -576,6 +574,7 @@ class speedControlls:
         self.speed = pos
         self.calcMotors()
 
+    @state.driverNeeded
     def Mspeed(self):
         pos = controller_1.axis2.position()*1
         self.speed = pos
@@ -587,6 +586,7 @@ class speedControlls:
         self.diff = -pos
         self.calcMotors()
 
+    @state.driverNeeded
     def Dspeed(self):
         pos = controller_1.axis1.position()*1
         self.diff = -pos
