@@ -573,6 +573,7 @@ class speedControlls:
         self.speed = pos
         self.calcMotors()
 
+    @state.driverNeeded
     def Mspeed(self):
         pos = controller_1.axis2.position()*1
         self.speed = pos
@@ -584,6 +585,7 @@ class speedControlls:
         self.diff = -pos
         self.calcMotors()
 
+    @state.driverNeeded
     def Dspeed(self):
         pos = controller_1.axis1.position()*1
         self.diff = -pos
