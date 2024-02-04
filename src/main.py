@@ -634,15 +634,8 @@ class speedControlls:
                 self.Adrive(0,0)
             else:
                 log.debug("ATTON: Backup\n\tRunning non-SD card code")
-                self.Adrive(100,0)
-                wait(1300)
-
-                
-                self.Adrive(100,-100)
-                wait(1000)
-                
-                self.Adrive(-100,0)
-                wait(1000)
+                a = '' #atton
+                exec(str(a),glbls)
                 
                 self.Adrive(0,0)
                 #Arm()
