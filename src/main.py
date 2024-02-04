@@ -122,7 +122,7 @@ class Logger:
             line += str(i) + ","
         self.data += line[0:-1] + "\n"
         if len(self.data) > 50000:
-            print('saver')
+            self.debug('logs: saving, data at '+hex(len(self.data)))
             self.save()
 
     def __call__(self):
