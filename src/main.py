@@ -280,6 +280,11 @@ def SEL_ATTON(sd):
         brain.screen.clear_screen()
         DMui.draw()
     return w
+def skills():
+    state.mode = modes.skill
+    log.debug("COMP: skills")
+    speed.skills_drive()
+    
 
 mtrx = [
     [1,-1],
@@ -299,11 +304,14 @@ ui.add(Button(12,1,7,3,Color.RED  ," OFFNC ",SEL_ATTON(-1)))
 
 ui.add(Button(12,5,7,3,Color.BLUE ," DEFNC ",SEL_ATTON(1)))
 
+ui.add(Button(23,1,7,3,Color.ORANGE," skill ",skills))
+
 class modes:
-    stop = 0
-    ap = 1    #atton
+    stop  = 0
+    ap    = 1 #atton
     mode1 = 2 #tank
     mode2 = 3 #arcade
+    skill = 4
 
 DMui = UI()
 
@@ -649,6 +657,33 @@ class speedControlls:
             anunciator.code(0b0101)
         except BaseException as e:
             log.WARNING("ATTON: ERROR - "+str(e))
+            anunciator.code(0b0110)
+            self.Adrive(0,0)
+            
+    def skills_drive(self):
+        def logn(t):
+            log.debug("atton skills: "+t)
+        glbls = {
+            "Adrive":self.Adrive,
+            "wait":wait,
+            "print":print,
+            "ATONdrive":self.ATONdrive,
+            "log":logn
+        }
+        try:
+            log.debug("ATTON: Skills")
+            a = '' #skills
+            exec(str(a),glbls)
+            
+            self.Adrive(0,0)
+            #Arm()
+            #self.Adrive(10,0)
+            #wait(100)
+            #self.stop()
+            log.debug("ATTON-S: DONE")
+            anunciator.code(0b0101)
+        except BaseException as e:
+            log.WARNING("ATTON-S: ERROR - "+str(e))
             anunciator.code(0b0110)
             self.Adrive(0,0)
         
