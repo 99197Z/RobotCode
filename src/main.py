@@ -294,19 +294,9 @@ mtrx = [
 ui.add(Elem(1,1,"Robot Atton Sel"))
 ui.add(Rect(2.5,0.5,8,8,Color.RED))
 ui.add(Rect(11.5,0.5,8,8,Color.BLUE))
-<<<<<<< HEAD
 ui.add(Button(3,1,7,3,Color.RED  ," DEFNC ",SEL_ATTON(-1)))
 ui.add(Button(3,5,7,3,Color.BLUE ," OFFNC ",SEL_ATTON(-1)))
 ui.add(Button(12,1,7,3,Color.RED  ," OFFNC ",SEL_ATTON(1)))
-=======
-
-ui.add(Button(3,1,7,3,Color.RED  ," DEFNC ",SEL_ATTON(1)))
-
-ui.add(Button(3,5,7,3,Color.BLUE ," OFFNC ",SEL_ATTON(-1)))
-
-ui.add(Button(12,1,7,3,Color.RED  ," OFFNC ",SEL_ATTON(-1)))
-
->>>>>>> master
 ui.add(Button(12,5,7,3,Color.BLUE ," DEFNC ",SEL_ATTON(1)))
 
 ui.add(Button(23,1,7,3,Color.ORANGE," skill ",skills))
