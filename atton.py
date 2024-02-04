@@ -1,15 +1,7 @@
 Adrive(100,0)
 wait(1500)
+log("IN")
 
-
-#Adrive(100,-100)
-#wait(1000)
-
-#Adrive(-100,-100)
-#wait(1000)
-#
 Adrive(-100,0)
 wait(1500)
-
-#Adrive(-100,0)
-#wait(300)
+log("OUT")

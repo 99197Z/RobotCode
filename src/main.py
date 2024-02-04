@@ -619,11 +619,14 @@ class speedControlls:
     def driveSequence(self):
         """Autopilot driveSequence
         """
+        def logn(t):
+            log.debug("atton: "+t)
         glbls = {
             "Adrive":self.Adrive,
             "wait":wait,
             "print":print,
-            "ATONdrive":self.ATONdrive
+            "ATONdrive":self.ATONdrive,
+            "log":logn
         }
         try:
             if brain.sdcard.is_inserted() and brain.sdcard.exists('atton.py') :
