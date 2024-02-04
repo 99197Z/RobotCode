@@ -292,9 +292,13 @@ mtrx = [
 ]    
 
 ui.add(Elem(1,1,"Robot Atton Sel"))
-
 ui.add(Rect(2.5,0.5,8,8,Color.RED))
 ui.add(Rect(11.5,0.5,8,8,Color.BLUE))
+<<<<<<< HEAD
+ui.add(Button(3,1,7,3,Color.RED  ," DEFNC ",SEL_ATTON(-1)))
+ui.add(Button(3,5,7,3,Color.BLUE ," OFFNC ",SEL_ATTON(-1)))
+ui.add(Button(12,1,7,3,Color.RED  ," OFFNC ",SEL_ATTON(1)))
+=======
 
 ui.add(Button(3,1,7,3,Color.RED  ," DEFNC ",SEL_ATTON(1)))
 
@@ -302,6 +306,7 @@ ui.add(Button(3,5,7,3,Color.BLUE ," OFFNC ",SEL_ATTON(-1)))
 
 ui.add(Button(12,1,7,3,Color.RED  ," OFFNC ",SEL_ATTON(-1)))
 
+>>>>>>> master
 ui.add(Button(12,5,7,3,Color.BLUE ," DEFNC ",SEL_ATTON(1)))
 
 ui.add(Button(23,1,7,3,Color.ORANGE," skill ",skills))
@@ -332,8 +337,6 @@ DMui.add(Elem(1,1,"Robot Drive Sel"))
 
 DMui.add(Button(1,1,6,3,Color.ORANGE," TANK ",dmode(modes.mode2)))
 DMui.add(Button(23,1,5,3,Color.ORANGE," TMP ",dmode(modes.mode1)))
-
-
 
 class Anunciator:
     status = {
@@ -505,7 +508,6 @@ class State:
 steer_speed_mult = 1 #0.5
 autopilot_max_speed = 50 
 driver_pilot_max_speed = 100 
-
 
 def clamp(n, min, max): 
     if n < min: 
@@ -687,7 +689,6 @@ class speedControlls:
             anunciator.code(0b0110)
             self.Adrive(0,0)
         
-
 speed = speedControlls(driver_pilot_max_speed)
 
 def autonomous_start():
