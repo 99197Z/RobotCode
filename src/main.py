@@ -703,10 +703,14 @@ speed = speedControlls(driver_pilot_max_speed)
 
 def autonomous_start():
     log.debug("COMP: atton")
-    state.mode = modes.ap
     init()
-    drawInfoScreen()
-    speed.driveSequence()
+    if state.mode != modes.skill:
+        state.mode = modes.ap
+        drawInfoScreen()
+        speed.driveSequence()
+    else:
+        drawInfoScreen()
+        speed.skills_drive()
     state.mode = modes.mode1
     drawInfoScreen()
 
