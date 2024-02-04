@@ -1,11 +1,13 @@
 #do atton code here!
-time = int((60*1000)/((1500*2)+2000))+1
-for i in range(time):
-    wait(2000)
-    Adrive(100,0)
-    wait(1500)
-    
-    Adrive(-100,0)
-    wait(1500)
+time = (60*1000)-((2000*3)+10)
+puncher(200)
+wait(time)
 
-    log('cycle '+str(i))
+wait(2000)
+Adrive(100,0)
+wait(2000)
+
+Adrive(-100,0)
+wait(2000)
+
+puncher(0)

@@ -490,7 +490,7 @@ class State:
 
     def autopilotOnly(self,func):
         def wrapper(*args, **kwargs):
-            if self.mode == modes.ap:
+            if self.mode == modes.ap or self.mode == modes.skill:
                 func(*args, **kwargs)
         return wrapper
 
@@ -622,12 +622,15 @@ class speedControlls:
         """
         def logn(t):
             log.debug("atton: "+t)
+        def puncher(r):
+            motor_puncher.set_velocity(r,RPM)
         glbls = {
             "Adrive":self.Adrive,
             "wait":wait,
             "print":print,
             "ATONdrive":self.ATONdrive,
-            "log":logn
+            "log":logn,
+            "puncher":puncher
         }
         try:
             if brain.sdcard.is_inserted() and brain.sdcard.exists('atton.py') :
@@ -655,13 +658,16 @@ class speedControlls:
             
     def skills_drive(self):
         def logn(t):
-            log.debug("atton skills: "+t)
+            log.debug("atton-s: "+t)
+        def puncher(r):
+            motor_puncher.set_velocity(r,RPM)
         glbls = {
             "Adrive":self.Adrive,
             "wait":wait,
             "print":print,
             "ATONdrive":self.ATONdrive,
-            "log":logn
+            "log":logn,
+            "puncher":puncher
         }
         try:
             log.debug("ATTON: Skills")
@@ -764,6 +770,9 @@ def init():
 def collision():
     log.debug("inertial: collision")
 
+
+motor_drivetrain_left.set_velocity(0,RPM)
+motor_drivetrain_right.set_velocity(0,RPM)
 competition=Competition(driver,autonomous_start)
 init()
 inertial.collision(collision)
@@ -817,4 +826,3 @@ brain.screen.pressed(touch)
 motor_drivetrain_left.spin(FORWARD)
 motor_drivetrain_right.spin(FORWARD)
 motor_puncher.spin(FORWARD)
-speed.drive()
