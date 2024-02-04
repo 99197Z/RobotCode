@@ -2,8 +2,8 @@
 
 Adrive(100,0)
 wait(1500)
-log("IN")
+log('IN')
 
 Adrive(-100,0)
 wait(1500)
-log("OUT")
+log('OUT')

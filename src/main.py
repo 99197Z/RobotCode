@@ -275,7 +275,7 @@ def SEL_ATTON(sd):
         global A_SIDE
         log.debug("ATTON: Selected "+str(sd))
         A_SIDE = sd
-        ui.EN = False
+        ui.EN = False # type: ignore
         state.preSETUP = False
         brain.screen.clear_screen()
         DMui.draw()
